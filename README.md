@@ -18,6 +18,7 @@ DAZN Japan / U-NEXT フットボール / WOWOWサッカー の公式YouTubeチ�
 |---|---|
 | `config/teams.json` | 対象チームと、各社の表記ゆれ(例: ゲンク=DAZNでは「ヘンク」)。プレミアは全チーム対象 |
 | `config/japanese-players.json` | 欧州の日本人選手の名前リスト |
+| `config/notify.json` | 通知の対象(チームと日本人選手)。一覧の表示には関係しない。takuがチャットで頼んだらここを書き換える |
 | `scripts/fetch-youtube.mjs` | YouTube Data API で3社の過去15日分の動画を取得(キーは GitHub の `YOUTUBE_API_KEY`) |
 | `scripts/build.mjs` | 動画一覧から対象試合(過去14日)を選び、`site/data.js` を作る |
 | `scripts/notify.mjs` / `webpush.mjs` | 7・11・16時に新着をまとめて iPhone へ通知(Web Push。外部の部品なし) |

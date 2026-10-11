@@ -37,12 +37,14 @@ const data = readGlobal(path.join(ROOT, 'site/data.js'), 'HIGHLIGHTS');
 const publicKey = readGlobal(path.join(ROOT, 'site/push-config.js'), 'PUSH_PUBLIC_KEY');
 const state = fs.existsSync(STATE_FILE) ? JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')) : {};
 
-// 通知の対象(config/notify.json)。teams が空なら全試合
+// 通知の対象(config/notify.json)。指定したチームの試合か、指定した日本人選手が出場した試合。どちらも空なら全試合
 const rule = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/notify.json'), 'utf8'));
+const teams = rule.teams || [];
+const players = rule.players || [];
 const wanted = (m) =>
-  !rule.teams.length ||
-  rule.teams.includes(m.home.id) || rule.teams.includes(m.away.id) ||
-  (rule.japanesePlayers && m.jp.length > 0);
+  (!teams.length && !players.length) ||
+  teams.includes(m.home.id) || teams.includes(m.away.id) ||
+  m.jp.some((n) => players.includes(n));
 
 const subscriptions = (process.env.PUSH_SUBSCRIPTION || '')
   .split('\n').map((s) => s.trim()).filter(Boolean)
