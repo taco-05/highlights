@@ -39,8 +39,18 @@
   }
   .title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   h1 { font-size: 20px; margin: 0; letter-spacing: .02em; }
-  .toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); user-select: none; }
-  .toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+  /* 「未視聴のみ」のスイッチ(iPhoneの設定画面のような切り替え) */
+  .switch { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); user-select: none; -webkit-user-select: none; cursor: pointer; }
+  .switch input {
+    -webkit-appearance: none; appearance: none; margin: 0; flex: none; position: relative; cursor: pointer;
+    width: 36px; height: 22px; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); transition: background .15s, border-color .15s;
+  }
+  .switch input::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.35); transition: transform .15s;
+  }
+  .switch input:checked { background: var(--accent); border-color: var(--accent); }
+  .switch input:checked::after { transform: translateX(14px); }
   .chips { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 4px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .chip {
@@ -49,27 +59,39 @@
   }
   .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
   main { padding: 8px 16px calc(env(safe-area-inset-bottom) + 24px); max-width: 1100px; margin: 0 auto; }
-  h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 18px 2px 8px; }
-  .grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
+  h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 14px 2px 6px; }
+  .grid { display: grid; gap: 6px; grid-template-columns: 1fr; }
   @media (min-width: 700px) { .grid { grid-template-columns: 1fr 1fr; } }
   @media (min-width: 1000px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+  /* 一覧のカード: 左にチーム名2行、右の細い列に大会と節。1画面に多く並ぶよう詰めている */
   .card {
-    position: relative; display: block; width: 100%; text-align: left; font: inherit; color: inherit;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; cursor: pointer;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; align-items: start;
+    width: 100%; text-align: left; font: inherit; color: inherit;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; cursor: pointer;
   }
-  .card.watched { opacity: .55; }
-  .meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
-  .team { display: flex; align-items: center; gap: 10px; min-height: 30px; }
-  .team + .team { margin-top: 6px; }
+  .card.watched { opacity: .5; }
+  .team { display: flex; align-items: center; gap: 8px; height: 24px; min-width: 0; }
+  .team + .team { margin-top: 2px; }
   .badge {
-    flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
-    font-size: 9px; font-weight: 800; letter-spacing: -.02em; border: 3px solid transparent;
+    flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 7px; font-weight: 800; letter-spacing: -.03em; border: 2px solid transparent;
   }
-  .team-name { font-size: 16px; font-weight: 600; line-height: 1.25; }
-  .jp { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .jp span { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: var(--jp-bg); color: var(--jp-ink); font-weight: 600; }
-  .new-dot { position: absolute; top: 14px; right: 14px; width: 8px; height: 8px; border-radius: 50%; background: var(--dot); }
-  .card .meta { padding-right: 14px; }
+  .team-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .side { font-size: 11px; line-height: 1.45; color: var(--muted); text-align: right; max-width: 96px; padding-top: 2px; }
+  .side .comp { display: flex; align-items: center; justify-content: flex-end; gap: 5px; white-space: nowrap; }
+  .new-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--dot); }
+  .jp { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 3px 10px; margin-top: 5px; }
+  /* 日本人選手の出場ラベル(JPN + 名前) */
+  .jpn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text); }
+  .jpn b, .jpn-mini {
+    font-size: 9px; font-weight: 700; letter-spacing: .06em; line-height: 1; padding: 2px 3px 1px;
+    border-radius: 3px; border: 1px solid var(--jp-ink); color: var(--jp-ink);
+  }
+  .chip .jpn-mini { margin-right: 4px; vertical-align: 1px; }
+  .chip[aria-pressed="true"] .jpn-mini { border-color: currentColor; color: inherit; }
+  .sheet .team { height: 30px; }
+  .sheet .team-name { font-size: 16px; }
+  .sheet .jp { margin-top: 8px; }
   .empty { text-align: center; color: var(--muted); padding: 48px 0; }
   footer { color: var(--muted); font-size: 12px; text-align: center; padding: 16px; }
 
@@ -111,7 +133,7 @@
   <div class="title-row">
     <h1>ハイライト</h1>
     <div class="title-actions">
-      <label class="toggle"><input type="checkbox" id="unwatchedOnly"> 未視聴のみ</label>
+      <label class="switch"><input type="checkbox" role="switch" id="unwatchedOnly">未視聴のみ</label>
       <button class="bell" data-act="notify" aria-label="通知の設定">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
           <path d="M12 2.8a6.2 6.2 0 0 0-6.2 6.2v4.1l-1.6 2.6a.9.9 0 0 0 .8 1.4h14a.9.9 0 0 0 .8-1.4l-1.6-2.6V9A6.2 6.2 0 0 0 12 2.8z"/>
@@ -136,7 +158,7 @@
   const DATA = window.HIGHLIGHTS || { matches: [] };
   const FILTERS = [
     { id: 'all', label: 'すべて' },
-    { id: 'jp', label: '🇯🇵 出場' },
+    { id: 'jp', label: '<span class="jpn-mini">JPN</span>出場' },
     { id: 'premier', label: 'プレミア' },
     { id: 'laliga', label: 'ラ・リーガ' },
     { id: 'bundesliga', label: 'ブンデス' },
@@ -192,14 +214,21 @@
       (!unwatchedBox.checked || !watched.has(m.id)));
   }
 
+  const jpLabels = (m) => m.jp.length
+    ? `<div class="jp">${m.jp.map((n) => `<span class="jpn"><b>JPN</b>${esc(n)}</span>`).join('')}</div>` : '';
+
   function card(m) {
     const w = watched.has(m.id);
     return `<button class="card${w ? ' watched' : ''}" data-id="${m.id}">
-      ${w ? '' : '<span class="new-dot" aria-label="未視聴"></span>'}
-      <div class="meta"><span>${esc(m.comp)} ${esc(m.round)}</span>${w ? '<span>視聴済み</span>' : ''}</div>
-      <div class="team">${badge(m.home)}<span class="team-name">${esc(m.home.name)}</span></div>
-      <div class="team">${badge(m.away)}<span class="team-name">${esc(m.away.name)}</span></div>
-      ${m.jp.length ? `<div class="jp">${m.jp.map((n) => `<span>🇯🇵 ${esc(n)}</span>`).join('')}</div>` : ''}
+      <div>
+        <div class="team">${badge(m.home)}<span class="team-name">${esc(m.home.name)}</span></div>
+        <div class="team">${badge(m.away)}<span class="team-name">${esc(m.away.name)}</span></div>
+      </div>
+      <div class="side">
+        <div class="comp">${w ? '' : '<span class="new-dot" aria-label="未視聴"></span>'}${esc(m.compShort || m.comp)}</div>
+        <div>${esc(m.round)}</div>
+      </div>
+      ${jpLabels(m)}
     </button>`;
   }
 
@@ -232,7 +261,7 @@
         <button class="icon-btn" data-act="close">閉じる</button></div>
       <div class="team">${badge(m.home)}<span class="team-name">${esc(m.home.name)}</span></div>
       <div class="team">${badge(m.away)}<span class="team-name">${esc(m.away.name)}</span></div>
-      ${m.jp.length ? `<div class="jp">${m.jp.map((n) => `<span>🇯🇵 ${esc(n)}</span>`).join('')}</div>` : ''}
+      ${jpLabels(m)}
       <div class="player" id="player" style="--home:${h1};--away:${a1}">
         <button class="play-btn" data-act="play"><span>▶ 再生する</span></button>
       </div>

@@ -65,7 +65,7 @@ async function sendAll(payload) {
 
 // 通知の文面: チーム名だけ(結果は書かない)
 function message(matches) {
-  const lines = matches.slice(0, 4).map((m) => `${m.home.name} vs ${m.away.name}${m.jp.length ? ' 🇯🇵' : ''}`);
+  const lines = matches.slice(0, 4).map((m) => `${m.home.name} vs ${m.away.name}${m.jp.length ? '(JPN)' : ''}`);
   if (matches.length > 4) lines.push(`ほか${matches.length - 4}試合`);
   return { title: `ハイライトが${matches.length}試合届きました`, body: lines.join('\n'), url: SITE_URL };
 }
