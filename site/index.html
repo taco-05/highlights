@@ -146,12 +146,14 @@
     const [c1, c2] = t.colors;
     return `<span class="badge" style="background:${c1};color:${ink(c1)};border-color:${c2}">${esc(t.code)}</span>`;
   };
+  // 公開された日ごとに分ける(今日/昨日/10月9日(木))
   const sectionOf = (iso) => {
-    const h = (Date.now() - new Date(iso).getTime()) / 3600000;
-    if (h < 24) return '24時間以内';
-    if (h < 48) return '昨日';
-    if (h < 24 * 7) return '今週';
-    return 'それ以前';
+    const d = new Date(iso);
+    const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+    const diff = Math.round((day(new Date()) - day(d)) / 86400000);
+    if (diff <= 0) return '今日';
+    if (diff === 1) return '昨日';
+    return `${d.getMonth() + 1}月${d.getDate()}日(${'日月火水木金土'[d.getDay()]})`;
   };
 
   function renderChips() {

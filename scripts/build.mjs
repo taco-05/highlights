@@ -1,17 +1,18 @@
 // 集めたYouTubeの動画一覧から、対象チームのハイライトだけを選んでサイト用データを作る。
-// 使い方: node scripts/build.mjs <YouTubeページを保存したフォルダ>
-// ファイル名の先頭(dazn_ / unext_ / wowow_)で配信元を判別する。
+// 使い方: node scripts/build.mjs data/videos.json (fetch-youtube.mjs が作ったファイル)
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const rawDir = process.argv[2];
-if (!rawDir) {
-  console.error('使い方: node scripts/build.mjs <取得データのフォルダ>');
+const input = process.argv[2];
+if (!input) {
+  console.error('使い方: node scripts/build.mjs <動画一覧のJSON>');
   process.exit(1);
 }
 const now = Date.now();
+const SHOW_DAYS = 14; // 一覧に出すのは過去2週間
+const since = now - SHOW_DAYS * 86400000;
 
 const teamsCfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/teams.json'), 'utf8'));
 const jpCfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/japanese-players.json'), 'utf8'));
@@ -22,8 +23,6 @@ const norm = (s) => s.normalize('NFKC').replace(/[\s・･=.'’‐\-]/g, '').to
 const aliasMap = new Map();
 for (const t of teamsCfg.teams) for (const a of t.aliases) aliasMap.set(norm(a), t);
 const aliasesLongestFirst = [...aliasMap.entries()].sort((a, b) => b[0].length - a[0].length);
-
-const SOURCES = { dazn: 'DAZN', unext: 'U-NEXT', wowow: 'WOWOW' };
 
 // 上から順に判定する(女子・親善試合などは除外)
 const COMPS = [
@@ -59,37 +58,6 @@ const PAIR_RE = /^\s*(.+?)\s*(?:×|✕|\s+v\s+|\s+vs\.?\s+)\s*(.+?)\s*$/i;
 const NEGATIVE_RE = /出番なし|ベンチ外|欠場|メンバー外|離脱|出場なし/;
 // 名前ではない言葉(「先発出場」「2点目」など)を名前候補から外す
 const NOT_NAME_RE = /出場|先発|途中|記録|選手|点目|得点|ゴール|アシスト|活躍|初|今季|正真正銘|圧巻|劇的|待望/;
-
-// ---- YouTubeページから動画(ID・タイトル・公開からの時間)を取り出す ----
-function extractVideos(html) {
-  const m = html.match(/var ytInitialData = (\{.*?\});<\/script>/s);
-  if (!m) return [];
-  const out = [];
-  (function walk(o) {
-    if (!o || typeof o !== 'object') return;
-    if (o.lockupViewModel) {
-      const l = o.lockupViewModel;
-      const md = l.metadata?.lockupMetadataViewModel;
-      let ago = '';
-      JSON.stringify(md?.metadata || {}).replace(/"content":"([^"]*前)"/g, (_, x) => (ago = x));
-      out.push({ id: l.contentId, title: md?.title?.content || '', ago });
-      return;
-    }
-    if (o.videoRenderer) {
-      const v = o.videoRenderer;
-      out.push({ id: v.videoId, title: (v.title?.runs || []).map((r) => r.text).join(''), ago: v.publishedTimeText?.simpleText || '' });
-      return;
-    }
-    for (const k in o) walk(o[k]);
-  })(JSON.parse(m[1]));
-  return out;
-}
-
-const UNIT_MIN = { 秒: 1 / 60, 分: 1, 時間: 60, 日: 1440, 週間: 10080, か月: 43200, ヶ月: 43200, 年: 525600 };
-function agoToMinutes(ago) {
-  const m = ago.match(/(\d+)\s*(秒|分|時間|日|週間|か月|ヶ月|年)前/);
-  return m ? Number(m[1]) * UNIT_MIN[m[2]] : null;
-}
 
 // ---- タイトルの分解 ----
 function detectComp(text) {
@@ -180,21 +148,18 @@ function teamsInText(text) {
   return hits;
 }
 
-// ---- 1. 全ファイルから動画を集める ----
+// ---- 1. 動画一覧を読む ----
 const videos = new Map();
-for (const f of fs.readdirSync(rawDir).filter((f) => f.endsWith('.html'))) {
-  const src = SOURCES[f.split('_')[0]];
-  if (!src) continue;
-  for (const v of extractVideos(fs.readFileSync(path.join(rawDir, f), 'utf8'))) {
-    if (v.id && v.title && !videos.has(v.id)) videos.set(v.id, { ...v, src, ageMin: agoToMinutes(v.ago) });
-  }
+for (const v of JSON.parse(fs.readFileSync(input, 'utf8')).videos) {
+  if (v.id && v.title && !videos.has(v.id)) videos.set(v.id, { ...v, time: Date.parse(v.publishedAt) });
 }
 
 // ---- 2. ハイライトと「情報だけ使う動画」に分ける ----
 const highlights = [];
 const clips = [];
 for (const v of videos.values()) {
-  if (!SEASON_RE.test(v.title) || v.ageMin == null) continue;
+  if (!SEASON_RE.test(v.title) || !(v.time >= since)) continue;
+  if (v.playable === false) continue; // 埋め込み不可・日本で見られない動画は使わない
   const { compText, pair, blurb } = splitTitle(v.title);
   const comp = detectComp(compText) || detectComp(v.title);
   if (!comp || comp.skip) continue;
@@ -226,7 +191,7 @@ for (const h of highlights) {
     matches.set(key, { ...h, jp: new Set(jp) });
   } else {
     jp.forEach((n) => prev.jp.add(n));
-    if (h.v.ageMin > prev.v.ageMin) Object.assign(prev, { v: h.v, home: h.home, away: h.away });
+    if (h.v.time < prev.v.time) Object.assign(prev, { v: h.v, home: h.home, away: h.away });
   }
 }
 
@@ -251,7 +216,7 @@ const list = [...matches.values()]
     comp: m.comp.label,
     group: m.comp.group,
     round: m.round,
-    publishedAt: new Date(now - m.v.ageMin * 60000).toISOString(),
+    publishedAt: new Date(m.v.time).toISOString(),
     home: pub(m.home),
     away: pub(m.away),
     jp: [...m.jp],

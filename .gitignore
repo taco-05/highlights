@@ -2,3 +2,7 @@ tools/
 node_modules/
 .DS_Store
 .claude/
+# 自動更新のたびに作り直すファイル
+data/
+site/data.js
+review.json
