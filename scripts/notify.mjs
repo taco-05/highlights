@@ -37,6 +37,13 @@ const data = readGlobal(path.join(ROOT, 'site/data.js'), 'HIGHLIGHTS');
 const publicKey = readGlobal(path.join(ROOT, 'site/push-config.js'), 'PUSH_PUBLIC_KEY');
 const state = fs.existsSync(STATE_FILE) ? JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')) : {};
 
+// 通知の対象(config/notify.json)。teams が空なら全試合
+const rule = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/notify.json'), 'utf8'));
+const wanted = (m) =>
+  !rule.teams.length ||
+  rule.teams.includes(m.home.id) || rule.teams.includes(m.away.id) ||
+  (rule.japanesePlayers && m.jp.length > 0);
+
 const subscriptions = (process.env.PUSH_SUBSCRIPTION || '')
   .split('\n').map((s) => s.trim()).filter(Boolean)
   .flatMap((s) => { try { return [JSON.parse(s)]; } catch { console.log('通知先の登録コードが読めませんでした(コピーし直してください)'); return []; } });
@@ -77,8 +84,9 @@ if (!state.notified) {
   // 初回は今ある試合を「お知らせ済み」として記録するだけ(いきなり大量に届かないように)
   console.log(`初回のため記録だけしました(${ids.length}試合)`);
 } else {
-  const fresh = data.matches.filter((m) => !state.notified.includes(m.id));
-  console.log(`お知らせ時刻 ${new Date(slot + JST).toISOString().slice(5, 16).replace('T', ' ')}: 新着 ${fresh.length}試合`);
+  // 対象外のチームの新着は、通知せずに「お知らせ済み」として記録だけする
+  const fresh = data.matches.filter((m) => !state.notified.includes(m.id) && wanted(m));
+  console.log(`お知らせ時刻 ${new Date(slot + JST).toISOString().slice(5, 16).replace('T', ' ')}: 通知対象の新着 ${fresh.length}試合`);
   if (fresh.length) await sendAll(message(fresh));
 }
 

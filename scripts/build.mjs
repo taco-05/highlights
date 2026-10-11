@@ -217,7 +217,7 @@ for (const c of clips) {
 }
 
 // ---- 5. 書き出し(動画タイトル・サムネイル・長さは出さない) ----
-const pub = (t) => ({ name: t.name, code: t.code, colors: t.colors });
+const pub = (t) => ({ id: t.id, name: t.name, code: t.code, colors: t.colors });
 const list = matches
   .map((m) => ({
     id: m.v.id,

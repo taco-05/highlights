@@ -1,0 +1,5 @@
+{
+  "_note": "通知の対象。teams が空なら一覧に載る全試合を通知する。チームは config/teams.json の id で書く。japanesePlayers が true なら、🇯🇵マークのある試合も(チームに関係なく)通知する。一覧の表示はこの設定に関係なく全試合。",
+  "teams": [],
+  "japanesePlayers": false
+}
