@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ハイライト">
+<meta name="theme-color" content="#0f1720">
+<title>ネタバレなしハイライト</title>
+<style>
+  :root {
+    --bg: #f3f5f8; --surface: #ffffff; --text: #111827; --muted: #6b7280; --line: #e5e7eb;
+    --accent: #0f766e; --accent-ink: #ffffff; --chip: #e9eef3; --dot: #ef4444; --sheet-shade: rgba(0,0,0,.45);
+    --jp-bg: #fff1f2; --jp-ink: #be123c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1720; --surface: #17212b; --text: #e5e7eb; --muted: #94a3b8; --line: #243241;
+      --accent: #2dd4bf; --accent-ink: #062b27; --chip: #1f2b37; --dot: #f87171; --sheet-shade: rgba(0,0,0,.6);
+      --jp-bg: #3b1520; --jp-ink: #fda4af;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1720; --surface: #17212b; --text: #e5e7eb; --muted: #94a3b8; --line: #243241;
+    --accent: #2dd4bf; --accent-ink: #062b27; --chip: #1f2b37; --dot: #f87171; --sheet-shade: rgba(0,0,0,.6);
+    --jp-bg: #3b1520; --jp-ink: #fda4af;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; -webkit-text-size-adjust: 100%; }
+  header {
+    position: sticky; top: 0; z-index: 5; background: var(--bg);
+    padding: calc(env(safe-area-inset-top) + 12px) 16px 8px; border-bottom: 1px solid var(--line);
+  }
+  .title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: .02em; }
+  .toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); user-select: none; }
+  .toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 4px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none; border: 0; border-radius: 999px; padding: 7px 12px; font-size: 14px;
+    background: var(--chip); color: var(--text); cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  main { padding: 8px 16px calc(env(safe-area-inset-bottom) + 24px); max-width: 1100px; margin: 0 auto; }
+  h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 18px 2px 8px; }
+  .grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
+  @media (min-width: 700px) { .grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1000px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+  .card {
+    position: relative; display: block; width: 100%; text-align: left; font: inherit; color: inherit;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; cursor: pointer;
+  }
+  .card.watched { opacity: .55; }
+  .meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .team { display: flex; align-items: center; gap: 10px; min-height: 30px; }
+  .team + .team { margin-top: 6px; }
+  .badge {
+    flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 9px; font-weight: 800; letter-spacing: -.02em; border: 3px solid transparent;
+  }
+  .team-name { font-size: 16px; font-weight: 600; line-height: 1.25; }
+  .jp { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .jp span { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: var(--jp-bg); color: var(--jp-ink); font-weight: 600; }
+  .new-dot { position: absolute; top: 14px; right: 14px; width: 8px; height: 8px; border-radius: 50%; background: var(--dot); }
+  .card .meta { padding-right: 14px; }
+  .empty { text-align: center; color: var(--muted); padding: 48px 0; }
+  footer { color: var(--muted); font-size: 12px; text-align: center; padding: 16px; }
+
+  /* 再生シート */
+  .sheet-wrap { position: fixed; inset: 0; background: var(--sheet-shade); display: none; z-index: 20; align-items: flex-end; justify-content: center; }
+  .sheet-wrap.open { display: flex; }
+  .sheet {
+    width: 100%; max-width: 760px; background: var(--surface); border-radius: 18px 18px 0 0;
+    padding: 14px 16px calc(env(safe-area-inset-bottom) + 16px); max-height: 92vh; overflow: auto;
+  }
+  @media (min-width: 700px) { .sheet-wrap { align-items: center; } .sheet { border-radius: 18px; } }
+  .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .icon-btn { border: 0; background: var(--chip); color: var(--text); border-radius: 999px; padding: 7px 12px; font-size: 14px; cursor: pointer; }
+  .player { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; margin: 12px 0; }
+  .player iframe, .player > div { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .play-btn {
+    position: absolute; inset: 0; display: grid; place-items: center; border: 0; cursor: pointer;
+    background: linear-gradient(135deg, var(--home, #334155), var(--away, #0f172a)); color: #fff; font-size: 17px; font-weight: 700;
+  }
+  .play-btn span { background: rgba(0,0,0,.45); padding: 12px 22px; border-radius: 999px; }
+  .sheet-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .src { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <div class="title-row">
+    <h1>ハイライト</h1>
+    <label class="toggle"><input type="checkbox" id="unwatchedOnly"> 未視聴のみ</label>
+  </div>
+  <nav class="chips" id="chips" aria-label="絞り込み"></nav>
+</header>
+<main id="list"></main>
+<footer id="footer"></footer>
+
+<div class="sheet-wrap" id="sheetWrap" role="dialog" aria-modal="true" aria-label="ハイライトを再生">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script src="data.js"></script>
+<script>
+(() => {
+  const DATA = window.HIGHLIGHTS || { matches: [] };
+  const FILTERS = [
+    { id: 'all', label: 'すべて' },
+    { id: 'jp', label: '🇯🇵 出場' },
+    { id: 'premier', label: 'プレミア' },
+    { id: 'laliga', label: 'ラ・リーガ' },
+    { id: 'bundesliga', label: 'ブンデス' },
+    { id: 'ligue1', label: 'リーグアン' },
+    { id: 'seriea', label: 'セリエA' },
+    { id: 'eredivisie', label: 'オランダ' },
+    { id: 'portugal', label: 'ポルトガル' },
+    { id: 'belgium', label: 'ベルギー' },
+    { id: 'europe', label: '欧州カップ' },
+    { id: 'cup', label: 'カップ戦' },
+  ];
+
+  // 端末ごとの「見た」記録(使えない環境でも動くように)
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+  const watched = new Set(store.get('watched', []));
+  const saveWatched = () => store.set('watched', [...watched]);
+  let filter = store.get('filter', 'all');
+  const unwatchedBox = document.getElementById('unwatchedOnly');
+  unwatchedBox.checked = store.get('unwatchedOnly', false);
+
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ink = (hex) => {
+    const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 160 ? '#111' : '#fff';
+  };
+  const badge = (t) => {
+    if (!t.colors) return `<span class="badge" style="background:var(--chip);color:var(--muted)">${esc(t.name.slice(0, 1))}</span>`;
+    const [c1, c2] = t.colors;
+    return `<span class="badge" style="background:${c1};color:${ink(c1)};border-color:${c2}">${esc(t.code)}</span>`;
+  };
+  const sectionOf = (iso) => {
+    const h = (Date.now() - new Date(iso).getTime()) / 3600000;
+    if (h < 24) return '24時間以内';
+    if (h < 48) return '昨日';
+    if (h < 24 * 7) return '今週';
+    return 'それ以前';
+  };
+
+  function renderChips() {
+    document.getElementById('chips').innerHTML = FILTERS.map((f) =>
+      `<button class="chip" data-f="${f.id}" aria-pressed="${f.id === filter}">${f.label}</button>`).join('');
+  }
+
+  function visible() {
+    return DATA.matches.filter((m) =>
+      (filter === 'all' || (filter === 'jp' ? m.jp.length > 0 : m.group === filter)) &&
+      (!unwatchedBox.checked || !watched.has(m.id)));
+  }
+
+  function card(m) {
+    const w = watched.has(m.id);
+    return `<button class="card${w ? ' watched' : ''}" data-id="${m.id}">
+      ${w ? '' : '<span class="new-dot" aria-label="未視聴"></span>'}
+      <div class="meta"><span>${esc(m.comp)} ${esc(m.round)}</span>${w ? '<span>視聴済み</span>' : ''}</div>
+      <div class="team">${badge(m.home)}<span class="team-name">${esc(m.home.name)}</span></div>
+      <div class="team">${badge(m.away)}<span class="team-name">${esc(m.away.name)}</span></div>
+      ${m.jp.length ? `<div class="jp">${m.jp.map((n) => `<span>🇯🇵 ${esc(n)}</span>`).join('')}</div>` : ''}
+    </button>`;
+  }
+
+  function render() {
+    const items = visible();
+    const list = document.getElementById('list');
+    if (!items.length) { list.innerHTML = '<p class="empty">表示できる試合はありません</p>'; return; }
+    const groups = new Map();
+    for (const m of items) {
+      const s = sectionOf(m.publishedAt);
+      if (!groups.has(s)) groups.set(s, []);
+      groups.get(s).push(m);
+    }
+    list.innerHTML = [...groups].map(([s, ms]) =>
+      `<h2>${s}(${ms.length})</h2><div class="grid">${ms.map(card).join('')}</div>`).join('');
+  }
+
+  // ---- 再生シート ----
+  const wrap = document.getElementById('sheetWrap');
+  const sheet = document.getElementById('sheet');
+  let player = null;
+  let openedAt = 0; // 開いた直後の二重タップで背景が押されて閉じるのを防ぐ
+
+  function openSheet(m) {
+    const [h1] = m.home.colors || ['#334155'];
+    const [a1] = m.away.colors || ['#0f172a'];
+    const w = watched.has(m.id);
+    sheet.innerHTML = `
+      <div class="sheet-head"><span class="src">${esc(m.comp)} ${esc(m.round)}</span>
+        <button class="icon-btn" data-act="close">閉じる</button></div>
+      <div class="team">${badge(m.home)}<span class="team-name">${esc(m.home.name)}</span></div>
+      <div class="team">${badge(m.away)}<span class="team-name">${esc(m.away.name)}</span></div>
+      ${m.jp.length ? `<div class="jp">${m.jp.map((n) => `<span>🇯🇵 ${esc(n)}</span>`).join('')}</div>` : ''}
+      <div class="player" id="player" style="--home:${h1};--away:${a1}">
+        <button class="play-btn" data-act="play"><span>▶ 再生する</span></button>
+      </div>
+      <div class="sheet-actions">
+        <span class="src" style="margin-right:auto;align-self:center">提供: ${esc(m.src)}(YouTube)</span>
+        <button class="icon-btn" data-act="toggle">${w ? '未視聴に戻す' : '見たことにする'}</button>
+      </div>`;
+    sheet.dataset.id = m.id;
+    openedAt = Date.now();
+    wrap.classList.add('open');
+  }
+
+  function closeSheet() {
+    if (player && player.destroy) player.destroy();
+    player = null;
+    wrap.classList.remove('open');
+    sheet.innerHTML = '';
+    render();
+  }
+
+  // YouTubeの公式プレイヤーは「再生」を押したときに初めて読み込む(サムネイルを先に見せないため)
+  let ytReady = null;
+  function loadYT() {
+    if (ytReady) return ytReady;
+    ytReady = new Promise((resolve) => {
+      window.onYouTubeIframeAPIReady = () => resolve(window.YT);
+      const s = document.createElement('script');
+      s.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(s);
+    });
+    return ytReady;
+  }
+
+  async function play(id) {
+    const holder = document.getElementById('player');
+    holder.innerHTML = '<div id="yt"></div>';
+    const YT = await loadYT();
+    player = new YT.Player('yt', {
+      videoId: id,
+      playerVars: { autoplay: 1, playsinline: 1, rel: 0 },
+      events: {
+        onReady: (e) => e.target.playVideo(),
+        onStateChange: (e) => {
+          if (e.data === YT.PlayerState.PLAYING) { watched.add(id); saveWatched(); }
+          // 終わったらすぐ閉じる(おすすめ動画に他の試合の結果が出るのを防ぐ)
+          if (e.data === YT.PlayerState.ENDED) closeSheet();
+        },
+      },
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (chip) { filter = chip.dataset.f; store.set('filter', filter); renderChips(); render(); return; }
+    const c = e.target.closest('.card');
+    if (c) { openSheet(DATA.matches.find((m) => m.id === c.dataset.id)); return; }
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act === 'close') closeSheet();
+    if (act === 'play') play(sheet.dataset.id);
+    if (act === 'toggle') {
+      const id = sheet.dataset.id;
+      watched.has(id) ? watched.delete(id) : watched.add(id);
+      saveWatched();
+      e.target.textContent = watched.has(id) ? '未視聴に戻す' : '見たことにする';
+    }
+    if (e.target === wrap && Date.now() - openedAt > 500) closeSheet();
+  });
+  unwatchedBox.addEventListener('change', () => { store.set('unwatchedOnly', unwatchedBox.checked); render(); });
+
+  renderChips();
+  render();
+  const upd = new Date(DATA.generatedAt);
+  document.getElementById('footer').textContent =
+    `最終更新 ${upd.getMonth() + 1}/${upd.getDate()} ${String(upd.getHours()).padStart(2, '0')}:${String(upd.getMinutes()).padStart(2, '0')} ・ ${DATA.matches.length}試合`;
+})();
+</script>
+</body>
+</html>
