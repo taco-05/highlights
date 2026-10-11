@@ -29,6 +29,11 @@ const COMPS = [
   { re: /女子|WSL/, skip: true },
   { re: /プレシーズン|親善|フレンドリー/, skip: true },
   { re: /ブンデスリーガ\s*2部/, skip: true },
+  // Jリーグのチームが出る大会(J1のチームの試合だけ)。ACLは「チャンピオンズリーグ」を含むので欧州CLより先に判定する
+  { re: /AFCチャンピオンズリーグ\s*2|ACL\s*2/, id: 'acl2', label: 'ACL2', group: 'j1', j1Only: true },
+  { re: /AFCチャンピオンズリーグ|ACLエリート|ACLE/, id: 'acle', label: 'ACLエリート', group: 'j1', j1Only: true },
+  { re: /ルヴァンカップ/, id: 'levain', label: 'ルヴァンカップ', group: 'j1', j1Only: true },
+  { re: /天皇杯/, id: 'emperor', label: '天皇杯', group: 'j1', j1Only: true },
   { re: /UEFAスーパーカップ/, id: 'uefasuper', label: 'UEFAスーパーカップ', group: 'europe' },
   { re: /チャンピオンズリーグ/, id: 'cl', label: 'チャンピオンズリーグ', group: 'europe' },
   { re: /ヨーロッパリーグ/, id: 'el', label: 'ヨーロッパリーグ', group: 'europe' },
@@ -53,8 +58,8 @@ const COMPS = [
   { re: /コミュニティ・シールド/, id: 'shield', label: 'コミュニティ・シールド', group: 'cup' },
   { re: /J1リーグ/, id: 'j1', label: 'J1リーグ', group: 'j1' },
 ];
-// J1は全員が日本人選手なので、🇯🇵マークは付けない
-const NO_JP_MARK = new Set(['j1']);
+// J1とJ1チームのカップ戦・ACLは日本人選手ばかりなので、🇯🇵マークは付けない
+const noJpMark = (comp) => comp.group === 'j1';
 const SEASON_RE = /2026[-/]27|26[-/]27/;
 const NOT_HIGHLIGHT_RE = /ゴール集|プレー集|トピック|ふりかえり|振り返り|特集|切り抜き|インタビュー|速報|ピッチレベル|全ゴール|プロファイル/;
 const PAIR_RE = /^\s*(.+?)\s*(?:×|✕|\s+v\s+|\s+vs\.?\s+)\s*(.+?)\s*$/i;
@@ -161,11 +166,13 @@ for (const v of JSON.parse(fs.readFileSync(input, 'utf8')).videos) {
 const highlights = [];
 const clips = [];
 for (const v of videos.values()) {
-  if (!SEASON_RE.test(v.title) || !(v.time >= since)) continue;
+  if (!(v.time >= since)) continue;
   if (v.playable === false) continue; // 埋め込み不可・日本で見られない動画は使わない
   const { compText, pair, blurb } = splitTitle(v.title);
   const comp = detectComp(compText) || detectComp(v.title);
   if (!comp || comp.skip) continue;
+  // 「2026-27」などのシーズン表記で古い動画を除く(国内カップ戦は表記が違うことがあるので見ない)
+  if (!comp.j1Only && !SEASON_RE.test(v.title)) continue;
   const round = detectRound(compText);
   const isHighlight = /ハイライト/.test(v.title) && !NOT_HIGHLIGHT_RE.test(v.title);
   if (isHighlight && pair) {
@@ -183,6 +190,15 @@ const allTeamsKeys = new Set();
 for (const h of highlights) if (allTeamsComps.has(h.comp.id)) allTeamsKeys.add(h.home.key).add(h.away.key);
 const isTarget = (t) => t.target || allTeamsKeys.has(t.key);
 
+// 今季のJ1チームか(teams.json で league が j1、またはJ1リーグの試合に出ている)。ACL・国内カップ戦の絞り込みに使う
+const leagueOf = new Map(teamsCfg.teams.map((t) => [t.id, t.league]));
+const j1LeagueKeys = new Set();
+for (const h of highlights) if (h.comp.id === 'j1') j1LeagueKeys.add(h.home.key).add(h.away.key);
+const isJ1Team = (t) => (t.id && leagueOf.get(t.id) === 'j1') || j1LeagueKeys.has(t.key);
+const included = (h) =>
+  h.comp.j1Only ? isJ1Team(h.home) || isJ1Team(h.away)
+    : allTeamsComps.has(h.comp.id) || isTarget(h.home) || isTarget(h.away);
+
 // ---- 3. 対象試合だけ残し、同じ試合は「先に出た方」を採用 ----
 // 配信会社によって「第◯節」の数え方が違うことがある(延期分など)ので、節では比べない。
 // 「同じ大会・同じチーム・3日以内」なら同じ試合とみなす(リーグ戦で3日以内に同じチームが2試合することはない)
@@ -197,8 +213,8 @@ const sameMatch = (a, b) => {
 };
 const matches = [];
 for (const h of highlights) {
-  if (!allTeamsComps.has(h.comp.id) && !isTarget(h.home) && !isTarget(h.away)) continue;
-  const jp = NO_JP_MARK.has(h.comp.id) ? [] : findJapanese(h.blurb, h.v.title);
+  if (!included(h)) continue;
+  const jp = noJpMark(h.comp) ? [] : findJapanese(h.blurb, h.v.title);
   const prev = matches.find((m) => sameMatch(m, h));
   if (!prev) {
     matches.push({ ...h, jp: new Set(jp) });
@@ -210,7 +226,7 @@ for (const h of highlights) {
 
 // ---- 4. 選手特集・速報などの動画から「日本人出場」の情報だけ足す ----
 for (const c of clips) {
-  if (NO_JP_MARK.has(c.comp.id)) continue;
+  if (noJpMark(c.comp)) continue;
   const jp = findJapanese(c.v.title, c.v.title);
   if (!jp.length) continue;
   const teams = teamsInText(c.v.title);

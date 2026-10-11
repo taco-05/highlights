@@ -58,7 +58,7 @@ async function sendAll(payload) {
     const r = await sendPush(sub, payload, { publicKey, keyObject, subject: SITE_URL });
     const where = new URL(sub.endpoint).host;
     if (r.status >= 200 && r.status < 300) console.log(`送信OK (${where})`);
-    else if (r.status === 404 || r.status === 410) console.log(`通知先が無効になっています。サイトの🔔から登録し直してください (${where} ${r.status})`);
+    else if (r.status === 404 || r.status === 410) console.log(`通知先が無効になっています。サイト右上のベルのボタンから登録し直してください (${where} ${r.status})`);
     else console.log(`送信できませんでした (${where} ${r.status} ${r.text})`);
   }
 }

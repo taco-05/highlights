@@ -93,7 +93,9 @@
   .sheet-actions { display: flex; gap: 8px; justify-content: flex-end; }
   .src { font-size: 12px; color: var(--muted); }
   .title-actions { display: flex; align-items: center; gap: 10px; }
-  .bell { border: 0; background: var(--chip); color: var(--text); width: 36px; height: 36px; border-radius: 50%; font-size: 17px; cursor: pointer; }
+  .bell { border: 0; background: transparent; color: var(--muted); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: grid; place-items: center; padding: 0; }
+  .bell svg { fill: currentColor; }
+  .bell:active { background: var(--chip); }
   /* 通知の設定 */
   .note { font-size: 14px; line-height: 1.6; color: var(--text); margin: 6px 0 12px; }
   .note.muted { color: var(--muted); font-size: 13px; }
@@ -110,7 +112,12 @@
     <h1>ハイライト</h1>
     <div class="title-actions">
       <label class="toggle"><input type="checkbox" id="unwatchedOnly"> 未視聴のみ</label>
-      <button class="bell" data-act="notify" aria-label="通知の設定">🔔</button>
+      <button class="bell" data-act="notify" aria-label="通知の設定">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path d="M12 2.8a6.2 6.2 0 0 0-6.2 6.2v4.1l-1.6 2.6a.9.9 0 0 0 .8 1.4h14a.9.9 0 0 0 .8-1.4l-1.6-2.6V9A6.2 6.2 0 0 0 12 2.8z"/>
+          <path d="M9.6 18.6a2.4 2.4 0 0 0 4.8 0z"/>
+        </svg>
+      </button>
     </div>
   </div>
   <nav class="chips" id="chips" aria-label="絞り込み"></nav>
@@ -291,7 +298,7 @@
         <ol class="steps">
           <li>Safariの下にある<b>共有ボタン</b>(□に↑のマーク)を押す</li>
           <li><b>「ホーム画面に追加」</b>を選び、「追加」を押す</li>
-          <li>ホーム画面の<b>「ハイライト」</b>アイコンから開き、もう一度 🔔 を押す</li>
+          <li>ホーム画面の<b>「ハイライト」</b>アイコンから開き、もう一度右上の<b>ベルのボタン</b>を押す</li>
         </ol>`;
     } else if (!pushSupported) {
       body += '<p class="note">この画面では通知が使えません。</p>';

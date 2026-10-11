@@ -77,9 +77,9 @@
     { "id": "machida", "name": "FC町田ゼルビア", "code": "MCD", "colors": ["#00488F", "#C8A200"], "league": "j1", "aliases": ["FC町田ゼルビア", "町田ゼルビア", "町田"] },
     { "id": "kawasaki", "name": "川崎フロンターレ", "code": "KAW", "colors": ["#23B6E5", "#000000"], "league": "j1", "aliases": ["川崎フロンターレ", "川崎F", "川崎"] },
     { "id": "yokohamafm", "name": "横浜F・マリノス", "code": "YFM", "colors": ["#00418E", "#E60012"], "league": "j1", "aliases": ["横浜F・マリノス", "横浜FM"] },
-    { "id": "yokohamafc", "name": "横浜FC", "code": "YFC", "colors": ["#29ABE2", "#FFFFFF"], "league": "j1", "aliases": ["横浜FC"] },
-    { "id": "shonan", "name": "湘南ベルマーレ", "code": "SHO", "colors": ["#9ACD32", "#0067B1"], "league": "j1", "aliases": ["湘南ベルマーレ", "湘南"] },
-    { "id": "niigata", "name": "アルビレックス新潟", "code": "NII", "colors": ["#F28C00", "#003F8F"], "league": "j1", "aliases": ["アルビレックス新潟", "新潟"] },
+    { "id": "yokohamafc", "name": "横浜FC", "code": "YFC", "colors": ["#29ABE2", "#FFFFFF"], "league": "j2", "aliases": ["横浜FC"] },
+    { "id": "shonan", "name": "湘南ベルマーレ", "code": "SHO", "colors": ["#9ACD32", "#0067B1"], "league": "j2", "aliases": ["湘南ベルマーレ", "湘南"] },
+    { "id": "niigata", "name": "アルビレックス新潟", "code": "NII", "colors": ["#F28C00", "#003F8F"], "league": "j2", "aliases": ["アルビレックス新潟", "新潟"] },
     { "id": "shimizu", "name": "清水エスパルス", "code": "SSP", "colors": ["#FF7F00", "#003399"], "league": "j1", "aliases": ["清水エスパルス", "清水"] },
     { "id": "nagoya", "name": "名古屋グランパス", "code": "NAG", "colors": ["#D7182A", "#FCC800"], "league": "j1", "aliases": ["名古屋グランパス", "名古屋"] },
     { "id": "kyoto", "name": "京都サンガF.C.", "code": "KYO", "colors": ["#7B2D8E", "#FFFFFF"], "league": "j1", "aliases": ["京都サンガF.C.", "京都サンガ", "京都"] },
@@ -92,8 +92,8 @@
     { "id": "nagasaki", "name": "V・ファーレン長崎", "code": "NAS", "colors": ["#1C4AA3", "#F08200"], "league": "j1", "aliases": ["V・ファーレン長崎", "長崎"] },
     { "id": "chiba", "name": "ジェフユナイテッド千葉", "code": "CHI", "colors": ["#FFD100", "#009944"], "league": "j1", "aliases": ["ジェフユナイテッド千葉", "ジェフ千葉", "千葉"] },
     { "id": "mito", "name": "水戸ホーリーホック", "code": "MIT", "colors": ["#0F2D69", "#FFFFFF"], "league": "j1", "aliases": ["水戸ホーリーホック", "水戸"] },
-    { "id": "sapporo", "name": "北海道コンサドーレ札幌", "code": "SAP", "colors": ["#E60012", "#000000"], "league": "j1", "aliases": ["北海道コンサドーレ札幌", "札幌"] },
-    { "id": "iwata", "name": "ジュビロ磐田", "code": "IWT", "colors": ["#6BB3E6", "#FFFFFF"], "league": "j1", "aliases": ["ジュビロ磐田", "磐田"] },
-    { "id": "tosu", "name": "サガン鳥栖", "code": "TOS", "colors": ["#1E90FF", "#FF69B4"], "league": "j1", "aliases": ["サガン鳥栖", "鳥栖"] }
+    { "id": "sapporo", "name": "北海道コンサドーレ札幌", "code": "SAP", "colors": ["#E60012", "#000000"], "league": "j2", "aliases": ["北海道コンサドーレ札幌", "札幌"] },
+    { "id": "iwata", "name": "ジュビロ磐田", "code": "IWT", "colors": ["#6BB3E6", "#FFFFFF"], "league": "j2", "aliases": ["ジュビロ磐田", "磐田"] },
+    { "id": "tosu", "name": "サガン鳥栖", "code": "TOS", "colors": ["#1E90FF", "#FF69B4"], "league": "j2", "aliases": ["サガン鳥栖", "鳥栖"] }
   ]
 }
