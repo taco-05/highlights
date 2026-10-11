@@ -151,7 +151,10 @@
   <div class="sheet" id="sheet"></div>
 </div>
 
-<script src="data.js"></script>
+<script>
+  // 試合データは開くたびに最新を読む(ブラウザやGitHubに残った古いデータを使わない)
+  document.write('<script src="data.js?t=' + Math.floor(Date.now() / 60000) + '"><\/script>');
+</script>
 <script src="push-config.js"></script>
 <script>
 (() => {
