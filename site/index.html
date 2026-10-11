@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ハイライト">
 <meta name="theme-color" content="#0f1720">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
 <title>ネタバレなしハイライト</title>
 <style>
   :root {
@@ -89,13 +92,26 @@
   .play-btn span { background: rgba(0,0,0,.45); padding: 12px 22px; border-radius: 999px; }
   .sheet-actions { display: flex; gap: 8px; justify-content: flex-end; }
   .src { font-size: 12px; color: var(--muted); }
+  .title-actions { display: flex; align-items: center; gap: 10px; }
+  .bell { border: 0; background: var(--chip); color: var(--text); width: 36px; height: 36px; border-radius: 50%; font-size: 17px; cursor: pointer; }
+  /* 通知の設定 */
+  .note { font-size: 14px; line-height: 1.6; color: var(--text); margin: 6px 0 12px; }
+  .note.muted { color: var(--muted); font-size: 13px; }
+  .steps { margin: 0 0 12px; padding-left: 1.4em; font-size: 14px; line-height: 1.8; }
+  .primary { display: block; width: 100%; border: 0; border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 700; background: var(--accent); color: var(--accent-ink); cursor: pointer; margin: 8px 0; text-align: center; text-decoration: none; }
+  .secondary { display: block; width: 100%; border: 0; border-radius: 12px; padding: 12px; font-size: 15px; background: var(--chip); color: var(--text); cursor: pointer; margin: 8px 0; text-align: center; text-decoration: none; }
+  .code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; word-break: break-all; max-height: 96px; overflow: auto; user-select: all; -webkit-user-select: all; }
+  .ok { color: var(--accent); font-weight: 700; }
 </style>
 </head>
 <body>
 <header>
   <div class="title-row">
     <h1>ハイライト</h1>
-    <label class="toggle"><input type="checkbox" id="unwatchedOnly"> 未視聴のみ</label>
+    <div class="title-actions">
+      <label class="toggle"><input type="checkbox" id="unwatchedOnly"> 未視聴のみ</label>
+      <button class="bell" data-act="notify" aria-label="通知の設定">🔔</button>
+    </div>
   </div>
   <nav class="chips" id="chips" aria-label="絞り込み"></nav>
 </header>
@@ -107,6 +123,7 @@
 </div>
 
 <script src="data.js"></script>
+<script src="push-config.js"></script>
 <script>
 (() => {
   const DATA = window.HIGHLIGHTS || { matches: [] };
@@ -259,6 +276,65 @@
     });
   }
 
+  // ---- 通知の設定 ----
+  const SECRET_URL = 'https://github.com/taco-05/highlights/settings/secrets/actions/new';
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isStandalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  const pushSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  const keyBytes = (b64u) => Uint8Array.from(atob(b64u.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
+
+  async function openNotifySheet(message = '') {
+    let body = '<p class="note">7時・11時・16時に、新しく届いたハイライトをまとめてお知らせします。お知らせにはチーム名だけを書き、結果は書きません。</p>';
+    if (isIOS && !isStandalone) {
+      body += `<p class="note">iPhone・iPadで通知を受け取るには、先にホーム画面に追加してください。</p>
+        <ol class="steps">
+          <li>Safariの下にある<b>共有ボタン</b>(□に↑のマーク)を押す</li>
+          <li><b>「ホーム画面に追加」</b>を選び、「追加」を押す</li>
+          <li>ホーム画面の<b>「ハイライト」</b>アイコンから開き、もう一度 🔔 を押す</li>
+        </ol>`;
+    } else if (!pushSupported) {
+      body += '<p class="note">この画面では通知が使えません。</p>';
+    } else {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub || Notification.permission !== 'granted') {
+        body += '<button class="primary" data-act="subscribe">通知をオンにする</button>';
+      } else {
+        body += `<p class="note"><span class="ok">✓ この端末の通知はオンです</span></p>
+          <p class="note">最後に、下の<b>登録コード</b>をGitHubに登録すると通知が届くようになります(最初の1回だけ)。</p>
+          <ol class="steps">
+            <li>「コードをコピー」を押す</li>
+            <li>「GitHubの登録ページを開く」を押す</li>
+            <li><b>Name</b> に <code>PUSH_SUBSCRIPTION</code>、<b>Secret</b> にコピーしたコードを貼り付けて「Add secret」</li>
+          </ol>
+          <div class="code" id="subCode">${esc(JSON.stringify(sub))}</div>
+          <button class="primary" data-act="copy">コードをコピー</button>
+          <a class="secondary" href="${SECRET_URL}" target="_blank" rel="noopener">GitHubの登録ページを開く</a>`;
+      }
+    }
+    sheet.innerHTML = `<div class="sheet-head"><strong>通知の設定</strong><button class="icon-btn" data-act="close">閉じる</button></div>
+      ${message ? `<p class="note">${message}</p>` : ''}${body}`;
+    sheet.dataset.id = '';
+    openedAt = Date.now();
+    wrap.classList.add('open');
+  }
+
+  async function subscribe() {
+    // iPhoneでは、ボタンを押した直後に許可を求める必要がある
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') {
+      openNotifySheet('通知が許可されませんでした。iPhoneの「設定」→「通知」→「ハイライト」から許可できます。');
+      return;
+    }
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(window.PUSH_PUBLIC_KEY) });
+      openNotifySheet();
+    } catch (err) {
+      openNotifySheet(`通知の登録に失敗しました(${esc(err.message || err)})`);
+    }
+  }
+
   document.addEventListener('click', (e) => {
     const chip = e.target.closest('.chip');
     if (chip) { filter = chip.dataset.f; store.set('filter', filter); renderChips(); render(); return; }
@@ -267,6 +343,14 @@
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (act === 'close') closeSheet();
     if (act === 'play') play(sheet.dataset.id);
+    if (act === 'notify') openNotifySheet();
+    if (act === 'subscribe') subscribe();
+    if (act === 'copy') {
+      const btn = e.target;
+      navigator.clipboard.writeText(document.getElementById('subCode').textContent)
+        .then(() => { btn.textContent = '✓ コピーしました'; })
+        .catch(() => { btn.textContent = 'コピーできませんでした。コードを長押ししてコピーしてください'; });
+    }
     if (act === 'toggle') {
       const id = sheet.dataset.id;
       watched.has(id) ? watched.delete(id) : watched.add(id);
@@ -276,6 +360,8 @@
     if (e.target === wrap && Date.now() - openedAt > 500) closeSheet();
   });
   unwatchedBox.addEventListener('change', () => { store.set('unwatchedOnly', unwatchedBox.checked); render(); });
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
   renderChips();
   render();

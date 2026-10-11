@@ -1,4 +1,5 @@
-# 30分ごとに YouTube から最新の動画を集め、対象試合を選んでサイトを公開し直す
+# 30分ごとに YouTube から最新の動画を集め、対象試合を選んでサイトを公開し直す。
+# 7時・11時・16時(日本時間)を過ぎたら、前回以降の新着をまとめて通知する。
 name: update
 
 on:
@@ -7,9 +8,14 @@ on:
   schedule:
     - cron: '*/30 * * * *'
   workflow_dispatch:
+    inputs:
+      test:
+        description: 'テスト通知を1通送る'
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  contents: write # 通知の記録(state/notify.json)を保存するため
   pages: write
   id-token: write
 
@@ -46,3 +52,19 @@ jobs:
           path: site
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: 通知(7時・11時・16時)
+        env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          PUSH_SUBSCRIPTION: ${{ secrets.PUSH_SUBSCRIPTION }}
+          NOTIFY_TEST: ${{ github.event.inputs.test }}
+        run: node scripts/notify.mjs
+      - name: 通知の記録を保存
+        run: |
+          if [ -n "$(git status --porcelain state/)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add state/
+            git commit -q -m "通知の記録を更新"
+            git pull -q --rebase origin main
+            git push -q origin HEAD:main
+          fi

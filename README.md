@@ -18,10 +18,21 @@ DAZN Japan / U-NEXT フットボール / WOWOWサッカー の公式YouTubeチ�
 |---|---|
 | `config/teams.json` | 対象チームと、各社の表記ゆれ(例: ゲンク=DAZNでは「ヘンク」)。プレミアは全チーム対象 |
 | `config/japanese-players.json` | 欧州の日本人選手の名前リスト |
-| `scripts/build.mjs` | 動画一覧から対象試合を選び、`site/data.js` を作る |
-| `site/` | 公開されるサイト本体 |
-| `review.json` | AIの点検用(未登録の名前候補・分解できなかったタイトル) |
+| `scripts/fetch-youtube.mjs` | YouTube Data API で3社の過去15日分の動画を取得(キーは GitHub の `YOUTUBE_API_KEY`) |
+| `scripts/build.mjs` | 動画一覧から対象試合(過去14日)を選び、`site/data.js` を作る |
+| `scripts/notify.mjs` / `webpush.mjs` | 7・11・16時に新着をまとめて iPhone へ通知(Web Push。外部の部品なし) |
+| `scripts/make-icons.mjs` | ホーム画面用アイコンを作る |
+| `state/notify.json` | 通知の記録(自動更新が書き込む。手で触らない) |
+| `site/` | 公開されるサイト本体(`data.js` は自動更新のたびに作り直すので GitHub には置かない) |
 | `serve.mjs` | 手元で確認するためのサーバー(`node serve.mjs` → http://localhost:4173) |
+
+## 自動で動いているもの(`.github/workflows/update.yml`)
+
+30分ごと: 動画取得 → 対象試合の選別 → サイト公開 → (7・11・16時を過ぎていれば)通知 → 通知の記録を保存。
+AIの点検用リスト `review.json`(未登録の名前候補など)は、各回の「review」という成果物に7日間残る。
+
+GitHub の秘密の保管場所: `YOUTUBE_API_KEY` / `VAPID_PRIVATE_KEY`(通知の送り主の証明) / `PUSH_SUBSCRIPTION`(通知先の端末。1行に1台)。
+テスト通知: Actions の update を手動実行し「テスト通知を1通送る」にチェック。
 
 ## 決まっていること
 
