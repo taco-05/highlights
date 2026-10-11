@@ -180,28 +180,37 @@ for (const h of highlights) if (h.comp.id === 'premier') premierKeys.add(h.home.
 const isTarget = (t) => t.target || (teamsCfg.premierAllTeams && premierKeys.has(t.key));
 
 // ---- 3. 対象試合だけ残し、同じ試合は「先に出た方」を採用 ----
-const matches = new Map();
+// 配信会社によって「第◯節」の数え方が違うことがある(延期分など)ので、節では比べない。
+// 「同じ大会・同じチーム・3日以内」なら同じ試合とみなす(リーグ戦で3日以内に同じチームが2試合することはない)
+const NEAR = 3 * 86400000;
+const knownIds = new Set(teamsCfg.teams.map((t) => t.id));
+const teamKeys = (h) => [h.home, h.away].map((t) => t.key);
+const sameMatch = (a, b) => {
+  if (a.comp.id !== b.comp.id || Math.abs(a.v.time - b.v.time) >= NEAR) return false;
+  const ka = teamKeys(a), kb = teamKeys(b);
+  // 登録済みのチームが1つでも共通なら同じ試合。登録されていないチーム同士なら、名前が両方一致したときだけ
+  return ka.some((k) => knownIds.has(k) && kb.includes(k)) || ka.every((k) => kb.includes(k));
+};
+const matches = [];
 for (const h of highlights) {
   if (h.comp.id !== 'premier' && !isTarget(h.home) && !isTarget(h.away)) continue;
-  const known = [h.home, h.away].filter((t) => t.id).map((t) => t.id).sort();
-  const key = [h.comp.id, h.round, ...(known.length ? known : [h.home.key, h.away.key].sort())].join('|');
   const jp = findJapanese(h.blurb, h.v.title);
-  const prev = matches.get(key);
+  const prev = matches.find((m) => sameMatch(m, h));
   if (!prev) {
-    matches.set(key, { ...h, jp: new Set(jp) });
+    matches.push({ ...h, jp: new Set(jp) });
   } else {
     jp.forEach((n) => prev.jp.add(n));
-    if (h.v.time < prev.v.time) Object.assign(prev, { v: h.v, home: h.home, away: h.away });
+    if (h.v.time < prev.v.time) Object.assign(prev, { v: h.v, home: h.home, away: h.away, round: h.round });
   }
 }
 
 // ---- 4. 選手特集・速報などの動画から「日本人出場」の情報だけ足す ----
 for (const c of clips) {
   const jp = findJapanese(c.v.title, c.v.title);
-  if (!jp.length || !c.round) continue;
+  if (!jp.length) continue;
   const teams = teamsInText(c.v.title);
-  for (const m of matches.values()) {
-    if (m.comp.id === c.comp.id && m.round === c.round && (teams.has(m.home.id) || teams.has(m.away.id))) {
+  for (const m of matches) {
+    if (m.comp.id === c.comp.id && Math.abs(m.v.time - c.v.time) < NEAR && (teams.has(m.home.id) || teams.has(m.away.id))) {
       jp.forEach((n) => m.jp.add(n));
     }
   }
@@ -209,7 +218,7 @@ for (const c of clips) {
 
 // ---- 5. 書き出し(動画タイトル・サムネイル・長さは出さない) ----
 const pub = (t) => ({ name: t.name, code: t.code, colors: t.colors });
-const list = [...matches.values()]
+const list = matches
   .map((m) => ({
     id: m.v.id,
     src: m.v.src,

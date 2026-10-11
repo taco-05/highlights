@@ -37,14 +37,16 @@ for (const ch of CHANNELS) {
   let pageToken = '';
   for (let page = 0; page < MAX_PAGES; page++) {
     const r = await api('playlistItems', { part: 'snippet,contentDetails', playlistId, maxResults: 50, ...(pageToken && { pageToken }) });
-    let reachedOld = false;
+    let fresh = 0;
     for (const it of r.items) {
       const publishedAt = it.contentDetails.videoPublishedAt || it.snippet.publishedAt;
-      if (Date.parse(publishedAt) < cutoff) { reachedOld = true; continue; }
+      if (Date.parse(publishedAt) < cutoff) continue;
+      fresh++;
       videos.push({ id: it.contentDetails.videoId, src: ch.src, title: it.snippet.title, publishedAt });
     }
     pageToken = r.nextPageToken;
-    if (reachedOld || !pageToken) break;
+    // 並び順が前後する動画もあるので、1ページまるごと古くなったら終わり
+    if (!fresh || !pageToken) break;
   }
 }
 
