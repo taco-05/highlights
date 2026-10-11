@@ -51,7 +51,10 @@ const COMPS = [
   { re: /コッパ・イタリア/, id: 'coppa', label: 'コッパ・イタリア', group: 'cup' },
   { re: /KNVB/, id: 'knvb', label: 'KNVBカップ', group: 'cup' },
   { re: /コミュニティ・シールド/, id: 'shield', label: 'コミュニティ・シールド', group: 'cup' },
+  { re: /J1リーグ/, id: 'j1', label: 'J1リーグ', group: 'j1' },
 ];
+// J1は全員が日本人選手なので、🇯🇵マークは付けない
+const NO_JP_MARK = new Set(['j1']);
 const SEASON_RE = /2026[-/]27|26[-/]27/;
 const NOT_HIGHLIGHT_RE = /ゴール集|プレー集|トピック|ふりかえり|振り返り|特集|切り抜き|インタビュー|速報|ピッチレベル|全ゴール|プロファイル/;
 const PAIR_RE = /^\s*(.+?)\s*(?:×|✕|\s+v\s+|\s+vs\.?\s+)\s*(.+?)\s*$/i;
@@ -174,10 +177,11 @@ for (const v of videos.values()) {
   }
 }
 
-// プレミアは「大会に出ている全チーム」が対象。カップ戦・欧州カップでも使う
-const premierKeys = new Set();
-for (const h of highlights) if (h.comp.id === 'premier') premierKeys.add(h.home.key).add(h.away.key);
-const isTarget = (t) => t.target || (teamsCfg.premierAllTeams && premierKeys.has(t.key));
+// プレミア・J1は「大会に出ている全チーム」が対象。カップ戦・欧州カップでも使う
+const allTeamsComps = new Set(teamsCfg.allTeamsComps || []);
+const allTeamsKeys = new Set();
+for (const h of highlights) if (allTeamsComps.has(h.comp.id)) allTeamsKeys.add(h.home.key).add(h.away.key);
+const isTarget = (t) => t.target || allTeamsKeys.has(t.key);
 
 // ---- 3. 対象試合だけ残し、同じ試合は「先に出た方」を採用 ----
 // 配信会社によって「第◯節」の数え方が違うことがある(延期分など)ので、節では比べない。
@@ -193,8 +197,8 @@ const sameMatch = (a, b) => {
 };
 const matches = [];
 for (const h of highlights) {
-  if (h.comp.id !== 'premier' && !isTarget(h.home) && !isTarget(h.away)) continue;
-  const jp = findJapanese(h.blurb, h.v.title);
+  if (!allTeamsComps.has(h.comp.id) && !isTarget(h.home) && !isTarget(h.away)) continue;
+  const jp = NO_JP_MARK.has(h.comp.id) ? [] : findJapanese(h.blurb, h.v.title);
   const prev = matches.find((m) => sameMatch(m, h));
   if (!prev) {
     matches.push({ ...h, jp: new Set(jp) });
@@ -206,6 +210,7 @@ for (const h of highlights) {
 
 // ---- 4. 選手特集・速報などの動画から「日本人出場」の情報だけ足す ----
 for (const c of clips) {
+  if (NO_JP_MARK.has(c.comp.id)) continue;
   const jp = findJapanese(c.v.title, c.v.title);
   if (!jp.length) continue;
   const teams = teamsInText(c.v.title);

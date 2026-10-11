@@ -1,6 +1,6 @@
 {
-  "_note": "対象チームと、各社の表記ゆれ(aliases)。target=true が通知・表示の対象。プレミアは大会単位で全チーム対象。",
-  "premierAllTeams": true,
+  "_note": "対象チームと、各社の表記ゆれ(aliases)。target=true が表示の対象。allTeamsComps の大会(プレミア・J1)は、その大会に出ている全チームが対象。",
+  "allTeamsComps": ["premier", "j1"],
   "teams": [
     { "id": "barcelona", "name": "バルセロナ", "code": "BAR", "colors": ["#A50044", "#004D98"], "league": "laliga", "target": true, "aliases": ["バルセロナ", "FCバルセロナ", "バルサ"] },
     { "id": "realmadrid", "name": "レアル・マドリード", "code": "RMA", "colors": ["#FFFFFF", "#FEBE10"], "league": "laliga", "target": true, "aliases": ["レアル・マドリード", "レアル・マドリー", "R・マドリード", "Rマドリード"] },
@@ -67,6 +67,33 @@
     { "id": "stvv", "name": "シント=トロイデン", "code": "STV", "colors": ["#FFDD00", "#00337F"], "league": "belgium", "target": true, "aliases": ["シント=トロイデン", "シントトロイデン", "STVV"] },
     { "id": "antwerp", "name": "アントワープ", "code": "ANT", "colors": ["#D71920", "#FFFFFF"], "league": "belgium", "target": true, "aliases": ["アントワープ", "ロイヤル・アントワープ"] },
     { "id": "unionsg", "name": "ユニオンSG", "code": "USG", "colors": ["#FFD200", "#003399"], "league": "belgium", "target": true, "aliases": ["ユニオンSG", "ユニオン・サン=ジロワーズ", "ユニオン・サンジロワーズ", "ユニオン"] },
-    { "id": "charleroi", "name": "シャルルロワ", "code": "CHA", "colors": ["#000000", "#FFFFFF"], "league": "belgium", "target": true, "aliases": ["シャルルロワ"] }
+    { "id": "charleroi", "name": "シャルルロワ", "code": "CHA", "colors": ["#000000", "#FFFFFF"], "league": "belgium", "target": true, "aliases": ["シャルルロワ"] },
+
+    { "id": "kashima", "name": "鹿島アントラーズ", "code": "KAS", "colors": ["#B71940", "#1E2C54"], "league": "j1", "aliases": ["鹿島アントラーズ", "鹿島"] },
+    { "id": "urawa", "name": "浦和レッズ", "code": "URA", "colors": ["#E6002D", "#000000"], "league": "j1", "aliases": ["浦和レッズ", "浦和"] },
+    { "id": "kashiwa", "name": "柏レイソル", "code": "KSW", "colors": ["#FFF100", "#000000"], "league": "j1", "aliases": ["柏レイソル", "柏"] },
+    { "id": "fctokyo", "name": "FC東京", "code": "FCT", "colors": ["#1B3B8B", "#E60012"], "league": "j1", "aliases": ["FC東京"] },
+    { "id": "verdy", "name": "東京ヴェルディ", "code": "TYV", "colors": ["#00843D", "#FFFFFF"], "league": "j1", "aliases": ["東京ヴェルディ", "東京V"] },
+    { "id": "machida", "name": "FC町田ゼルビア", "code": "MCD", "colors": ["#00488F", "#C8A200"], "league": "j1", "aliases": ["FC町田ゼルビア", "町田ゼルビア", "町田"] },
+    { "id": "kawasaki", "name": "川崎フロンターレ", "code": "KAW", "colors": ["#23B6E5", "#000000"], "league": "j1", "aliases": ["川崎フロンターレ", "川崎F", "川崎"] },
+    { "id": "yokohamafm", "name": "横浜F・マリノス", "code": "YFM", "colors": ["#00418E", "#E60012"], "league": "j1", "aliases": ["横浜F・マリノス", "横浜FM"] },
+    { "id": "yokohamafc", "name": "横浜FC", "code": "YFC", "colors": ["#29ABE2", "#FFFFFF"], "league": "j1", "aliases": ["横浜FC"] },
+    { "id": "shonan", "name": "湘南ベルマーレ", "code": "SHO", "colors": ["#9ACD32", "#0067B1"], "league": "j1", "aliases": ["湘南ベルマーレ", "湘南"] },
+    { "id": "niigata", "name": "アルビレックス新潟", "code": "NII", "colors": ["#F28C00", "#003F8F"], "league": "j1", "aliases": ["アルビレックス新潟", "新潟"] },
+    { "id": "shimizu", "name": "清水エスパルス", "code": "SSP", "colors": ["#FF7F00", "#003399"], "league": "j1", "aliases": ["清水エスパルス", "清水"] },
+    { "id": "nagoya", "name": "名古屋グランパス", "code": "NAG", "colors": ["#D7182A", "#FCC800"], "league": "j1", "aliases": ["名古屋グランパス", "名古屋"] },
+    { "id": "kyoto", "name": "京都サンガF.C.", "code": "KYO", "colors": ["#7B2D8E", "#FFFFFF"], "league": "j1", "aliases": ["京都サンガF.C.", "京都サンガ", "京都"] },
+    { "id": "gamba", "name": "ガンバ大阪", "code": "GOS", "colors": ["#0068B7", "#000000"], "league": "j1", "aliases": ["ガンバ大阪", "G大阪"] },
+    { "id": "cerezo", "name": "セレッソ大阪", "code": "CEZ", "colors": ["#E6417C", "#1D2087"], "league": "j1", "aliases": ["セレッソ大阪", "C大阪"] },
+    { "id": "kobe", "name": "ヴィッセル神戸", "code": "KOB", "colors": ["#A50034", "#000000"], "league": "j1", "aliases": ["ヴィッセル神戸", "神戸"] },
+    { "id": "okayama", "name": "ファジアーノ岡山", "code": "OKA", "colors": ["#A6192E", "#1E2C54"], "league": "j1", "aliases": ["ファジアーノ岡山", "岡山"] },
+    { "id": "hiroshima", "name": "サンフレッチェ広島", "code": "HIR", "colors": ["#5B2C83", "#FFFFFF"], "league": "j1", "aliases": ["サンフレッチェ広島", "広島"] },
+    { "id": "fukuoka", "name": "アビスパ福岡", "code": "FUK", "colors": ["#0A2A6E", "#A0A0A0"], "league": "j1", "aliases": ["アビスパ福岡", "福岡"] },
+    { "id": "nagasaki", "name": "V・ファーレン長崎", "code": "NAS", "colors": ["#1C4AA3", "#F08200"], "league": "j1", "aliases": ["V・ファーレン長崎", "長崎"] },
+    { "id": "chiba", "name": "ジェフユナイテッド千葉", "code": "CHI", "colors": ["#FFD100", "#009944"], "league": "j1", "aliases": ["ジェフユナイテッド千葉", "ジェフ千葉", "千葉"] },
+    { "id": "mito", "name": "水戸ホーリーホック", "code": "MIT", "colors": ["#0F2D69", "#FFFFFF"], "league": "j1", "aliases": ["水戸ホーリーホック", "水戸"] },
+    { "id": "sapporo", "name": "北海道コンサドーレ札幌", "code": "SAP", "colors": ["#E60012", "#000000"], "league": "j1", "aliases": ["北海道コンサドーレ札幌", "札幌"] },
+    { "id": "iwata", "name": "ジュビロ磐田", "code": "IWT", "colors": ["#6BB3E6", "#FFFFFF"], "league": "j1", "aliases": ["ジュビロ磐田", "磐田"] },
+    { "id": "tosu", "name": "サガン鳥栖", "code": "TOS", "colors": ["#1E90FF", "#FF69B4"], "league": "j1", "aliases": ["サガン鳥栖", "鳥栖"] }
   ]
 }
