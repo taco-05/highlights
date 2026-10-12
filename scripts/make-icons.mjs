@@ -7,18 +7,34 @@ import { fileURLToPath } from 'node:url';
 
 const SITE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'site');
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-const BG_TOP = hex('#12313a'), BG_BOTTOM = hex('#0f1720'), BALL = hex('#f8fafc'), PLAY = hex('#14b8a6');
+const BG = hex('#11242d'), WHITE = hex('#f8fafc'), TEAL = hex('#14b8a6');
+const LINE = BG.map((c) => Math.round(c * 0.9 + 255 * 0.1)); // ピッチのラインは背景に白を10%重ねた色
 
-// 0〜1の座標で、その点が何色かを返す(背景 → 白いボール → 緑の再生マーク)
-function colorAt(x, y) {
-  const inBall = (x - 0.5) ** 2 + (y - 0.5) ** 2 <= 0.31 ** 2;
-  const [ax, ay, bx, by, cx, cy] = [0.43, 0.36, 0.43, 0.64, 0.67, 0.5];
+// デザイン「.H」(512×512の座標で考える)
+//   背景: ピッチのライン(外枠・センターライン・センターサークル)をうっすら
+//   「.」: 緑の丸 / 「H」: 白の縦棒2本 / Hの横棒の代わりに緑の▶
+const inRoundRect = (x, y, x0, y0, x1, y1, r) => {
+  if (x < x0 || x > x1 || y < y0 || y > y1) return false;
+  const dx = Math.max(x0 + r - x, 0, x - (x1 - r)), dy = Math.max(y0 + r - y, 0, y - (y1 - r));
+  return dx * dx + dy * dy <= r * r;
+};
+const inTriangle = (x, y, [ax, ay], [bx, by], [cx, cy]) => {
   const side = (px, py, qx, qy) => (x - qx) * (py - qy) - (px - qx) * (y - qy);
   const s1 = side(ax, ay, bx, by), s2 = side(bx, by, cx, cy), s3 = side(cx, cy, ax, ay);
-  const inPlay = (s1 <= 0 && s2 <= 0 && s3 <= 0) || (s1 >= 0 && s2 >= 0 && s3 >= 0);
-  if (inBall && inPlay) return PLAY;
-  if (inBall) return BALL;
-  return BG_TOP.map((c, i) => Math.round(c + (BG_BOTTOM[i] - c) * y));
+  return (s1 <= 0 && s2 <= 0 && s3 <= 0) || (s1 >= 0 && s2 >= 0 && s3 >= 0);
+};
+
+// 0〜1の座標で、その点が何色かを返す
+function colorAt(u, v) {
+  const x = u * 512, y = v * 512;
+  if (inTriangle(x, y, [258, 196], [258, 316], [352, 256])) return TEAL;
+  if ((x >= 196 && x <= 258 || x >= 352 && x <= 414) && y >= 136 && y <= 376) return WHITE;
+  if ((x - 128) ** 2 + (y - 346) ** 2 <= 30 ** 2) return TEAL;
+  const pitchFrame = inRoundRect(x, y, 40, 40, 472, 472, 14) && !inRoundRect(x, y, 48, 48, 464, 464, 6);
+  const halfway = Math.abs(y - 256) <= 4 && x >= 44 && x <= 468;
+  const centerCircle = Math.abs(Math.hypot(x - 256, y - 256) - 92) <= 4;
+  if (pitchFrame || halfway || centerCircle) return LINE;
+  return BG;
 }
 
 function png(size) {
