@@ -80,7 +80,8 @@
     width: 100%; text-align: left; font: inherit; color: inherit;
     background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; cursor: pointer;
   }
-  .card.watched { opacity: .5; }
+  /* 見た試合は中身だけ薄くする(カードの背景は不透明のままにして、後ろのスワイプ用の帯が透けないように) */
+  .card.watched > * { opacity: .5; }
   .team { display: flex; align-items: center; gap: 8px; height: 24px; min-width: 0; }
   .team + .team { margin-top: 2px; }
   .badge {
@@ -131,7 +132,7 @@
   .ts { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; cursor: pointer; }
   /* 全画面専用のプレイヤーは画面の外に置いておく(再生すると全画面に切り替わる) */
   .yt-full { position: fixed; left: -10000px; top: 0; width: 320px; height: 180px; }
-  .full-btn { display: inline-flex; align-items: center; gap: 6px; }
+  .full-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--accent-ink); font-weight: 700; padding: 8px 14px; }
   /* 一覧のスワイプ */
   .swipe { position: relative; border-radius: 12px; overflow: hidden; }
   .swipe-bg {
@@ -143,6 +144,9 @@
   .swipe .card { position: relative; touch-action: pan-y; transition: transform .2s ease; }
   .swipe .card.dragging { transition: none; }
   h1 .dot { color: var(--accent); }
+  /* 見出しの「H」はアイコンと同じ形(2本の縦棒+間に▶)。高さは書体の大文字と同じ0.7em */
+  h1 .h-mark { height: .7em; width: auto; fill: currentColor; vertical-align: baseline; margin: 0 .06em 0 .02em; }
+  h1 .h-mark .tri { fill: var(--accent); }
   .play-btn {
     position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; border: 0; cursor: pointer;
     background: linear-gradient(135deg, var(--home, #334155), var(--away, #0f172a)); color: #fff; font-size: 17px; font-weight: 700;
@@ -179,7 +183,7 @@
 <body>
 <header>
   <div class="title-row">
-    <h1><span class="dot">.</span>Highlight</h1>
+    <h1 aria-label=".Highlight"><span class="dot">.</span><svg class="h-mark" viewBox="196 136 218 240" aria-hidden="true"><rect x="196" y="136" width="62" height="240"/><rect x="352" y="136" width="62" height="240"/><path class="tri" d="M258 196 L258 316 L352 256 Z"/></svg>ighlight</h1>
     <div class="title-actions">
       <label class="switch"><input type="checkbox" role="switch" id="unwatchedOnly">未視聴のみ</label>
       <button class="bell" data-act="notify" aria-label="通知の設定">
@@ -481,8 +485,8 @@
   }
 
   // コメントの時間リンクから、その時点へ移動して再生。
-  // 移動するとYouTubeのプレイヤーが数秒だけ操作ボタンを表示するので、3秒前から流して場面が隠れないようにする
-  const LEAD_SECONDS = 3;
+  // 移動するとYouTubeのプレイヤーが4秒ほど操作ボタンを表示するので、4秒前から流して場面が隠れないようにする
+  const LEAD_SECONDS = 4;
   function seekTo(at) {
     const from = Math.max(0, at - LEAD_SECONDS);
     if (coverShown()) { startPlayback(from); return; }
