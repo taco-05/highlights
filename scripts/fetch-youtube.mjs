@@ -54,13 +54,14 @@ for (const ch of CHANNELS) {
 const candidates = videos.filter((v) => /ハイライト/.test(v.title));
 for (let i = 0; i < candidates.length; i += 50) {
   const batch = candidates.slice(i, i + 50);
-  const r = await api('videos', { part: 'status,contentDetails', id: batch.map((v) => v.id).join(',') });
+  const r = await api('videos', { part: 'status,contentDetails,statistics', id: batch.map((v) => v.id).join(',') });
   const info = new Map(r.items.map((x) => [x.id, x]));
   for (const v of batch) {
     const x = info.get(v.id);
     const rr = x?.contentDetails?.regionRestriction;
     const blockedInJapan = !!rr && ((rr.blocked || []).includes('JP') || (rr.allowed && !rr.allowed.includes('JP')));
     v.playable = !!x && x.status.embeddable && x.status.privacyStatus === 'public' && !blockedInJapan;
+    if (x?.statistics?.commentCount != null) v.comments = Number(x.statistics.commentCount);
   }
 }
 

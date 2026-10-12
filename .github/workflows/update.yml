@@ -40,6 +40,10 @@ jobs:
         run: node scripts/fetch-youtube.mjs data/videos.json
       - name: 対象試合を選んでサイト用データを作る
         run: node scripts/build.mjs data/videos.json
+      - name: 一覧の動画のコメントを取得(新しい動画ほどこまめに)
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: node scripts/fetch-comments.mjs
       - name: AI点検用のリストを保存
         uses: actions/upload-artifact@v4
         with:

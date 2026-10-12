@@ -251,6 +251,7 @@ const list = matches
     home: pub(m.home),
     away: pub(m.away),
     jp: [...m.jp],
+    ...(m.v.comments != null && { commentCount: m.v.comments }),
   }))
   .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 

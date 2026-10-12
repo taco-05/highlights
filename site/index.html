@@ -138,6 +138,18 @@
   .secondary { display: block; width: 100%; border: 0; border-radius: 12px; padding: 12px; font-size: 15px; background: var(--chip); color: var(--text); cursor: pointer; margin: 8px 0; text-align: center; text-decoration: none; }
   .code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; word-break: break-all; max-height: 96px; overflow: auto; user-select: all; -webkit-user-select: all; }
   .ok { color: var(--accent); font-weight: 700; }
+  /* コメント */
+  .comments { margin-top: 12px; }
+  .comments > .secondary { margin: 0; }
+  .cm-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 12px 0 4px; }
+  .seg { display: inline-flex; background: var(--chip); border-radius: 999px; padding: 2px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); font-size: 13px; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.18); }
+  .cm-meta { font-size: 11px; color: var(--muted); }
+  .cm { padding: 10px 0; border-top: 1px solid var(--line); }
+  .cm-head { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+  .cm-author { color: var(--text); font-weight: 600; }
+  .cm-text { font-size: 14px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
 </style>
 </head>
 <body>
@@ -283,7 +295,12 @@
       <div class="sheet-actions">
         <span class="src" style="margin-right:auto;align-self:center">提供: ${esc(m.src)}(YouTube)</span>
         <button class="icon-btn" data-act="toggle">${w ? '未視聴に戻す' : '見たことにする'}</button>
+      </div>
+      <div class="comments">
+        <button class="secondary" data-act="comments" id="cBtn">${commentsLabel(m)}</button>
+        <div id="cPanel" hidden></div>
       </div>`;
+    comments = null;
     sheet.dataset.id = m.id;
     openedAt = Date.now();
     wrap.classList.add('open');
@@ -321,11 +338,65 @@
         onReady: (e) => e.target.playVideo(),
         onStateChange: (e) => {
           if (e.data === YT.PlayerState.PLAYING) { watched.add(id); saveWatched(); }
-          // 終わったらすぐ閉じる(おすすめ動画に他の試合の結果が出るのを防ぐ)
-          if (e.data === YT.PlayerState.ENDED) closeSheet();
+          // 終わったらすぐプレイヤーを片付ける(おすすめ動画に他の試合の結果が出るのを防ぐ)。
+          // 画面は開いたままにして、続けてコメントを読めるようにする
+          if (e.data === YT.PlayerState.ENDED) {
+            player.destroy();
+            player = null;
+            holder.innerHTML = '<button class="play-btn" data-act="play"><span>▶ もう一度再生</span></button>';
+          }
         },
       },
     });
+  }
+
+  // ---- コメント(自動更新のたびに集めたものを、ボタンを押したときだけ読み込む) ----
+  const PAGE = 20;
+  let comments = null; // { id, data, order, shown }
+  const commentsLabel = (m) => `コメントを表示${m.commentCount ? `(${m.commentCount.toLocaleString()}件)` : ''}`;
+  const ago = (iso) => {
+    const min = Math.max(0, (Date.now() - new Date(iso).getTime()) / 60000);
+    if (min < 60) return `${Math.floor(min)}分前`;
+    if (min < 1440) return `${Math.floor(min / 60)}時間前`;
+    return `${Math.floor(min / 1440)}日前`;
+  };
+  const hhmm = (iso) => { const d = new Date(iso); return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
+
+  async function toggleComments() {
+    const panel = document.getElementById('cPanel'), btn = document.getElementById('cBtn');
+    const m = DATA.matches.find((x) => x.id === sheet.dataset.id);
+    if (!panel.hidden) { panel.hidden = true; btn.textContent = commentsLabel(m); return; }
+    panel.hidden = false;
+    btn.textContent = 'コメントを隠す';
+    if (!comments || comments.id !== m.id) {
+      panel.innerHTML = '<p class="note muted">読み込み中…</p>';
+      let data = null;
+      try {
+        const res = await fetch(`comments/${m.id}.json?t=${Math.floor(Date.now() / 60000)}`);
+        if (res.ok) data = await res.json();
+      } catch {}
+      comments = { id: m.id, data, order: 'top', shown: PAGE };
+    }
+    renderComments();
+  }
+
+  function renderComments() {
+    const panel = document.getElementById('cPanel');
+    if (!panel || panel.hidden) return;
+    const d = comments.data;
+    if (!d) { panel.innerHTML = '<p class="note muted">コメントを読み込めませんでした。公開されたばかりの動画は、次の自動更新(最大30分)のあとに見られます。</p>'; return; }
+    if (d.disabled) { panel.innerHTML = '<p class="note muted">この動画はコメントがオフになっています。</p>'; return; }
+    const list = d[comments.order] || [];
+    const seg = (key, label) => `<button data-act="corder" data-o="${key}" aria-pressed="${comments.order === key}">${label}</button>`;
+    panel.innerHTML = `
+      <div class="cm-bar"><div class="seg">${seg('top', '人気順')}${seg('new', '新しい順')}</div>
+        <span class="cm-meta">YouTubeのコメント ・ ${hhmm(d.fetchedAt)}時点</span></div>
+      ${list.length ? '' : '<p class="note muted">まだコメントはありません。</p>'}
+      ${list.slice(0, comments.shown).map((c) => `
+        <div class="cm"><div class="cm-head"><span class="cm-author">${esc(c.a)}</span><span>${ago(c.p)}</span>
+          ${c.l ? `<span>いいね ${c.l.toLocaleString()}</span>` : ''}${c.r ? `<span>返信 ${c.r}</span>` : ''}</div>
+          <div class="cm-text">${esc(c.t)}</div></div>`).join('')}
+      ${list.length > comments.shown ? '<button class="secondary" data-act="cmore">もっと見る</button>' : ''}`;
   }
 
   // ---- 通知の設定 ----
@@ -403,6 +474,9 @@
         .then(() => { btn.textContent = '✓ コピーしました'; })
         .catch(() => { btn.textContent = 'コピーできませんでした。コードを長押ししてコピーしてください'; });
     }
+    if (act === 'comments') toggleComments();
+    if (act === 'corder') { comments.order = e.target.closest('[data-o]').dataset.o; comments.shown = PAGE; renderComments(); }
+    if (act === 'cmore') { comments.shown += PAGE; renderComments(); }
     if (act === 'toggle') {
       const id = sheet.dataset.id;
       watched.has(id) ? watched.delete(id) : watched.add(id);
