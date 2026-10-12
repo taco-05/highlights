@@ -2,7 +2,7 @@
 self.addEventListener('push', (event) => {
   let d = {};
   try { d = event.data ? event.data.json() : {}; } catch {}
-  event.waitUntil(self.registration.showNotification(d.title || 'ハイライト', {
+  event.waitUntil(self.registration.showNotification(d.title || 'Highlight.', {
     body: d.body || '',
     icon: 'icon-192.png',
     tag: 'highlights',

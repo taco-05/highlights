@@ -6,16 +6,16 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ハイライト">
+<meta name="apple-mobile-web-app-title" content="Highlight.">
 <meta name="theme-color" content="#0f1720">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
-<!-- 見出し「Highlight」用の書体(Montserrat。使う文字だけ読み込む) -->
+<!-- 見出し「Highlight.」用の書体(Montserrat。使う文字だけ読み込む) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&text=Highlight&display=swap">
-<title>ネタバレなしハイライト</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&text=Highlight.&display=swap">
+<title>Highlight.</title>
 <style>
   :root {
     --bg: #edf0f4; --surface: #ffffff; --text: #111827; --muted: #6b7280; --line: #e0e4ea;
@@ -143,7 +143,7 @@
 <body>
 <header>
   <div class="title-row">
-    <h1>Highlight</h1>
+    <h1>Highlight.</h1>
     <div class="title-actions">
       <label class="switch"><input type="checkbox" role="switch" id="unwatchedOnly">未視聴のみ</label>
       <button class="bell" data-act="notify" aria-label="通知の設定">
@@ -342,7 +342,7 @@
         <ol class="steps">
           <li>Safariの下にある<b>共有ボタン</b>(□に↑のマーク)を押す</li>
           <li><b>「ホーム画面に追加」</b>を選び、「追加」を押す</li>
-          <li>ホーム画面の<b>「ハイライト」</b>アイコンから開き、もう一度右上の<b>ベルのボタン</b>を押す</li>
+          <li>ホーム画面の<b>「Highlight.」</b>アイコンから開き、もう一度右上の<b>ベルのボタン</b>を押す</li>
         </ol>`;
     } else if (!pushSupported) {
       body += '<p class="note">この画面では通知が使えません。</p>';
@@ -375,7 +375,7 @@
     // iPhoneでは、ボタンを押した直後に許可を求める必要がある
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') {
-      openNotifySheet('通知が許可されませんでした。iPhoneの「設定」→「通知」→「ハイライト」から許可できます。');
+      openNotifySheet('通知が許可されませんでした。iPhoneの「設定」→「通知」→「Highlight.」から許可できます。');
       return;
     }
     try {
