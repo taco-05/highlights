@@ -141,7 +141,8 @@
   }
   .swipe-bg.left { justify-content: flex-end; }
   .swipe-bg.ready { background: var(--accent); color: var(--accent-ink); }
-  .swipe .card { position: relative; touch-action: pan-y; transition: transform .2s ease; }
+  /* 指を離したときの戻り方: 0.3秒で、最後にふわっと止まる(Gmailなどと同じGoogleのデザインの標準の動き) */
+  .swipe .card { position: relative; touch-action: pan-y; transition: transform .3s cubic-bezier(.4, 0, .2, 1); }
   .swipe .card.dragging { transition: none; }
   h1 .dot { color: var(--accent); }
   /* 見出しの「H」はアイコンと同じ形(2本の縦棒+間に▶)。高さは書体の大文字と同じ0.7em */
@@ -213,7 +214,7 @@
   const DATA = window.HIGHLIGHTS || { matches: [] };
   const FILTERS = [
     { id: 'all', label: 'すべて' },
-    { id: 'jp', label: '<span class="jpn-mini">JPN</span>出場' },
+    { id: 'jp', label: 'JPN' },
     { id: 'cl', label: 'CL' },
     { id: 'el', label: 'EL' },
     { id: 'premier', label: 'プレミア' },
@@ -655,7 +656,7 @@
       const id = c.dataset.id;
       watched.has(id) ? watched.delete(id) : watched.add(id);
       saveWatched();
-      setTimeout(render, 220);
+      setTimeout(render, 320); // 戻る動き(0.3秒)が終わってから表示を更新する
     } else {
       bg.classList.remove('ready', 'left');
     }
