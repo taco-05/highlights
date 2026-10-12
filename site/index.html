@@ -115,6 +115,9 @@
     padding: 14px 16px calc(env(safe-area-inset-bottom) + 16px); max-height: 92vh; overflow: auto;
   }
   @media (min-width: 700px) { .sheet-wrap { align-items: center; } .sheet { border-radius: 18px; } }
+  /* 試合の画面は最初から最終的な高さで開く(コメントを開いても画面が上に動かず、中で下に伸びる) */
+  .sheet.tall { height: 92vh; height: 92dvh; }
+  @media (min-width: 700px) { .sheet.tall { height: min(92vh, 860px); } }
   .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
   .icon-btn { border: 0; background: var(--chip); color: var(--text); border-radius: 999px; padding: 7px 12px; font-size: 14px; cursor: pointer; }
   .player { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; margin: 12px 0; }
@@ -302,14 +305,18 @@
       </div>`;
     comments = null;
     sheet.dataset.id = m.id;
+    sheet.classList.add('tall');
+    sheet.scrollTop = 0;
     openedAt = Date.now();
     wrap.classList.add('open');
+    loadYT(); // 再生ボタンを押す前にYouTubeの部品を読み込んでおき、押してからの待ち時間を短くする
   }
 
   function closeSheet() {
     if (player && player.destroy) player.destroy();
     player = null;
     wrap.classList.remove('open');
+    sheet.classList.remove('tall');
     sheet.innerHTML = '';
     render();
   }
@@ -331,11 +338,16 @@
     const holder = document.getElementById('player');
     holder.innerHTML = '<div id="yt"></div>';
     const YT = await loadYT();
+    // 音なしで始める: iPhoneは音ありの自動再生を止めてサムネイル(ネタバレの元)を出してしまうが、
+    // 音なしなら1回のタップですぐ流れる。音はプレイヤーのミュート解除で出す
+    const noCaptions = (p) => { try { p.unloadModule('captions'); p.unloadModule('cc'); } catch {} };
     player = new YT.Player('yt', {
       videoId: id,
-      playerVars: { autoplay: 1, playsinline: 1, rel: 0 },
+      playerVars: { autoplay: 1, mute: 1, playsinline: 1, rel: 0, cc_load_policy: 0 },
       events: {
-        onReady: (e) => e.target.playVideo(),
+        onReady: (e) => { e.target.mute(); e.target.playVideo(); noCaptions(e.target); },
+        // 字幕は最初から出さない(字幕の機能が読み込まれたら外す)
+        onApiChange: (e) => noCaptions(e.target),
         onStateChange: (e) => {
           if (e.data === YT.PlayerState.PLAYING) { watched.add(id); saveWatched(); }
           // 終わったらすぐプレイヤーを片付ける(おすすめ動画に他の試合の結果が出るのを防ぐ)。
@@ -438,6 +450,7 @@
     sheet.innerHTML = `<div class="sheet-head"><strong>通知の設定</strong><button class="icon-btn" data-act="close">閉じる</button></div>
       ${message ? `<p class="note">${message}</p>` : ''}${body}`;
     sheet.dataset.id = '';
+    sheet.classList.remove('tall');
     openedAt = Date.now();
     wrap.classList.add('open');
   }
