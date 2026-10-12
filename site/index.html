@@ -120,10 +120,17 @@
   @media (min-width: 700px) { .sheet.tall { height: min(92vh, 860px); } }
   .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
   .icon-btn { border: 0; background: var(--chip); color: var(--text); border-radius: 999px; padding: 7px 12px; font-size: 14px; cursor: pointer; }
-  .player { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; margin: 12px 0; }
+  /* 動画は画面の上に固定し、その下(チーム名・コメント)だけがスクロールする */
+  .player-wrap { position: sticky; top: -14px; z-index: 3; background: var(--surface); margin: 0 -16px; padding: 0 16px 10px; }
+  .player { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; }
   .player iframe, .player > div { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  /* 再生前・再生後はプレイヤーを見せない(サムネイルやおすすめ動画のネタバレ防止) */
+  .yt-box { visibility: hidden; }
+  .yt-box.on { visibility: visible; }
+  .play-btn[hidden] { display: none; }
+  .ts { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; cursor: pointer; }
   .play-btn {
-    position: absolute; inset: 0; display: grid; place-items: center; border: 0; cursor: pointer;
+    position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; border: 0; cursor: pointer;
     background: linear-gradient(135deg, var(--home, #334155), var(--away, #0f172a)); color: #fff; font-size: 17px; font-weight: 700;
   }
   .play-btn span { background: rgba(0,0,0,.45); padding: 12px 22px; border-radius: 999px; }
@@ -289,12 +296,15 @@
     sheet.innerHTML = `
       <div class="sheet-head"><span class="src">${esc(m.comp)} ${esc(m.round)}</span>
         <button class="icon-btn" data-act="close">閉じる</button></div>
+      <div class="player-wrap">
+        <div class="player" id="player" style="--home:${h1};--away:${a1}">
+          <div class="yt-box" id="ytBox"><div id="yt"></div></div>
+          <button class="play-btn" data-act="play" id="playBtn"><span>▶ 再生する</span></button>
+        </div>
+      </div>
       <div class="team">${badge(m.home)}<span class="team-name">${esc(m.home.name)}</span></div>
       <div class="team">${badge(m.away)}<span class="team-name">${esc(m.away.name)}</span></div>
       ${jpLabels(m)}
-      <div class="player" id="player" style="--home:${h1};--away:${a1}">
-        <button class="play-btn" data-act="play"><span>▶ 再生する</span></button>
-      </div>
       <div class="sheet-actions">
         <span class="src" style="margin-right:auto;align-self:center">提供: ${esc(m.src)}(YouTube)</span>
         <button class="icon-btn" data-act="toggle">${w ? '未視聴に戻す' : '見たことにする'}</button>
@@ -309,10 +319,13 @@
     sheet.scrollTop = 0;
     openedAt = Date.now();
     wrap.classList.add('open');
-    loadYT(); // 再生ボタンを押す前にYouTubeの部品を読み込んでおき、押してからの待ち時間を短くする
+    preparePlayer(m.id);
   }
 
   function closeSheet() {
+    clearTimeout(fallbackTimer);
+    pending = null;
+    playerReady = false;
     if (player && player.destroy) player.destroy();
     player = null;
     wrap.classList.remove('open');
@@ -321,7 +334,8 @@
     render();
   }
 
-  // YouTubeの公式プレイヤーは「再生」を押したときに初めて読み込む(サムネイルを先に見せないため)
+  // YouTubeの公式プレイヤーは、試合を開いた時点で「見えない状態」で準備しておく(サムネイルは見せない)。
+  // 再生ボタンを押した瞬間に音ありで再生を指示する。iPhoneに止められたときだけ音なしで始める
   let ytReady = null;
   function loadYT() {
     if (ytReady) return ytReady;
@@ -334,32 +348,77 @@
     return ytReady;
   }
 
-  async function play(id) {
-    const holder = document.getElementById('player');
-    holder.innerHTML = '<div id="yt"></div>';
+  let playerReady = false;
+  let pending = null; // 準備が終わる前に押されたときの再生予約 { at }
+  let fallbackTimer = null;
+  const noCaptions = (p) => { try { p.unloadModule('captions'); p.unloadModule('cc'); } catch {} };
+
+  // 再生前・再生後は、プレイヤーを見えなくして自前の再生ボタンを出す(サムネイルやおすすめ動画を見せない)
+  function showCover(label) {
+    document.getElementById('ytBox')?.classList.remove('on');
+    const btn = document.getElementById('playBtn');
+    if (btn) { btn.hidden = false; btn.innerHTML = `<span>${label}</span>`; }
+  }
+  function hideCover() {
+    document.getElementById('ytBox')?.classList.add('on');
+    const btn = document.getElementById('playBtn');
+    if (btn) btn.hidden = true;
+  }
+  const coverShown = () => !document.getElementById('ytBox')?.classList.contains('on');
+
+  async function preparePlayer(id) {
+    playerReady = false;
     const YT = await loadYT();
-    // 音なしで始める: iPhoneは音ありの自動再生を止めてサムネイル(ネタバレの元)を出してしまうが、
-    // 音なしなら1回のタップですぐ流れる。音はプレイヤーのミュート解除で出す
-    const noCaptions = (p) => { try { p.unloadModule('captions'); p.unloadModule('cc'); } catch {} };
+    // 準備中に画面が閉じられた・別の試合に切り替わった場合は何もしない
+    if (!wrap.classList.contains('open') || sheet.dataset.id !== id || !document.getElementById('yt')) return;
     player = new YT.Player('yt', {
       videoId: id,
-      playerVars: { autoplay: 1, mute: 1, playsinline: 1, rel: 0, cc_load_policy: 0 },
+      playerVars: { playsinline: 1, rel: 0, cc_load_policy: 0 },
       events: {
-        onReady: (e) => { e.target.mute(); e.target.playVideo(); noCaptions(e.target); },
+        onReady: (e) => {
+          playerReady = true;
+          noCaptions(e.target);
+          renderComments(); // 動画の長さが分かったので、コメントの時間リンクを付け直す
+          if (pending) { const p = pending; pending = null; startPlayback(p.at); }
+        },
         // 字幕は最初から出さない(字幕の機能が読み込まれたら外す)
         onApiChange: (e) => noCaptions(e.target),
         onStateChange: (e) => {
-          if (e.data === YT.PlayerState.PLAYING) { watched.add(id); saveWatched(); }
-          // 終わったらすぐプレイヤーを片付ける(おすすめ動画に他の試合の結果が出るのを防ぐ)。
+          const S = YT.PlayerState;
+          if (e.data === S.PLAYING || e.data === S.BUFFERING) clearTimeout(fallbackTimer);
+          if (e.data === S.PLAYING) { watched.add(id); saveWatched(); }
+          // 終わったらすぐプレイヤーを隠す(おすすめ動画に他の試合の結果が出るのを防ぐ)。
           // 画面は開いたままにして、続けてコメントを読めるようにする
-          if (e.data === YT.PlayerState.ENDED) {
-            player.destroy();
-            player = null;
-            holder.innerHTML = '<button class="play-btn" data-act="play"><span>▶ もう一度再生</span></button>';
-          }
+          if (e.data === S.ENDED) showCover('▶ もう一度再生');
         },
       },
     });
+  }
+
+  // 再生する(at を指定するとその秒から)。ボタンを押した流れのまま呼ぶので、iPhoneでも音ありで流れやすい
+  function startPlayback(at = null) {
+    if (!player || !playerReady) {
+      pending = { at };
+      showCover('読み込み中…');
+      return;
+    }
+    hideCover();
+    if (at != null) player.seekTo(at, true);
+    player.unMute();
+    player.playVideo();
+    clearTimeout(fallbackTimer);
+    // iPhoneが音ありの再生を止めたときは、音なしで始める(音はプレイヤーのミュート解除で)
+    fallbackTimer = setTimeout(() => {
+      const s = player?.getPlayerState?.();
+      if (player && s !== YT.PlayerState.PLAYING && s !== YT.PlayerState.BUFFERING) { player.mute(); player.playVideo(); }
+    }, 900);
+  }
+
+  // コメントの時間リンクから、その時点へ移動して再生
+  function seekTo(at) {
+    if (coverShown()) { startPlayback(at); return; }
+    player.seekTo(at, true);
+    player.playVideo();
   }
 
   // ---- コメント(自動更新のたびに集めたものを、ボタンを押したときだけ読み込む) ----
@@ -392,9 +451,20 @@
     renderComments();
   }
 
+  // コメント中の「1:23」「1:02:03」を、その時点から再生するリンクにする(動画の長さを超える時間はリンクにしない)
+  const TIME_RE = /(^|[^\d:])((?:(\d{1,2}):)?(\d{1,2}):(\d{2}))(?![\d:])/g;
+  function timeLinks(escaped, duration) {
+    return escaped.replace(TIME_RE, (all, pre, t, h, mm, ss) => {
+      const sec = (Number(h) || 0) * 3600 + Number(mm) * 60 + Number(ss);
+      if (Number(ss) >= 60 || (h && Number(mm) >= 60) || sec > (duration || 1800)) return all;
+      return `${pre}<button class="ts" data-act="seek" data-t="${sec}">${t}</button>`;
+    });
+  }
+
   function renderComments() {
     const panel = document.getElementById('cPanel');
-    if (!panel || panel.hidden) return;
+    if (!panel || panel.hidden || !comments) return;
+    const duration = playerReady && player?.getDuration ? player.getDuration() : 0;
     const d = comments.data;
     if (!d) { panel.innerHTML = '<p class="note muted">コメントを読み込めませんでした。公開されたばかりの動画は、次の自動更新(最大30分)のあとに見られます。</p>'; return; }
     if (d.disabled) { panel.innerHTML = '<p class="note muted">この動画はコメントがオフになっています。</p>'; return; }
@@ -407,7 +477,7 @@
       ${list.slice(0, comments.shown).map((c) => `
         <div class="cm"><div class="cm-head"><span class="cm-author">${esc(c.a)}</span><span>${ago(c.p)}</span>
           ${c.l ? `<span>いいね ${c.l.toLocaleString()}</span>` : ''}${c.r ? `<span>返信 ${c.r}</span>` : ''}</div>
-          <div class="cm-text">${esc(c.t)}</div></div>`).join('')}
+          <div class="cm-text">${timeLinks(esc(c.t), duration)}</div></div>`).join('')}
       ${list.length > comments.shown ? '<button class="secondary" data-act="cmore">もっと見る</button>' : ''}`;
   }
 
@@ -478,7 +548,8 @@
     if (c) { openSheet(DATA.matches.find((m) => m.id === c.dataset.id)); return; }
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (act === 'close') closeSheet();
-    if (act === 'play') play(sheet.dataset.id);
+    if (act === 'play') startPlayback();
+    if (act === 'seek') seekTo(Number(e.target.closest('[data-t]').dataset.t));
     if (act === 'notify') openNotifySheet();
     if (act === 'subscribe') subscribe();
     if (act === 'copy') {
