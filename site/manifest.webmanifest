@@ -1,6 +1,6 @@
 {
-  "name": "Highlight.",
-  "short_name": "Highlight.",
+  "name": ".Highlight",
+  "short_name": ".Highlight",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
