@@ -129,6 +129,20 @@
   .yt-box.on { visibility: visible; }
   .play-btn[hidden] { display: none; }
   .ts { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; cursor: pointer; }
+  /* 全画面専用のプレイヤーは画面の外に置いておく(再生すると全画面に切り替わる) */
+  .yt-full { position: fixed; left: -10000px; top: 0; width: 320px; height: 180px; }
+  .full-btn { display: inline-flex; align-items: center; gap: 6px; }
+  /* 一覧のスワイプ */
+  .swipe { position: relative; border-radius: 12px; overflow: hidden; }
+  .swipe-bg {
+    position: absolute; inset: 0; display: flex; align-items: center; padding: 0 18px; border-radius: 12px;
+    background: var(--chip); color: var(--muted); font-size: 13px; font-weight: 700;
+  }
+  .swipe-bg.left { justify-content: flex-end; }
+  .swipe-bg.ready { background: var(--accent); color: var(--accent-ink); }
+  .swipe .card { position: relative; touch-action: pan-y; transition: transform .2s ease; }
+  .swipe .card.dragging { transition: none; }
+  h1 .dot { color: var(--accent); }
   .play-btn {
     position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; border: 0; cursor: pointer;
     background: linear-gradient(135deg, var(--home, #334155), var(--away, #0f172a)); color: #fff; font-size: 17px; font-weight: 700;
@@ -165,7 +179,7 @@
 <body>
 <header>
   <div class="title-row">
-    <h1>.Highlight</h1>
+    <h1><span class="dot">.</span>Highlight</h1>
     <div class="title-actions">
       <label class="switch"><input type="checkbox" role="switch" id="unwatchedOnly">未視聴のみ</label>
       <button class="bell" data-act="notify" aria-label="通知の設定">
@@ -254,9 +268,11 @@
   const jpLabels = (m) => m.jp.length
     ? `<div class="jp">${m.jp.map((n) => `<span class="jpn"><b>JPN</b>${esc(n)}</span>`).join('')}</div>` : '';
 
+  // カードは左右にスワイプすると「見た/未視聴」を切り替えられる(下にあるのはスワイプ中に見える帯)
   function card(m) {
     const w = watched.has(m.id);
-    return `<button class="card${w ? ' watched' : ''}" data-id="${m.id}">
+    return `<div class="swipe"><div class="swipe-bg"><span>${w ? '未視聴に戻す' : '見たことにする'}</span></div>
+      <button class="card${w ? ' watched' : ''}" data-id="${m.id}">
       <div>
         <div class="team">${badge(m.home)}<span class="team-name">${esc(m.home.name)}</span></div>
         <div class="team">${badge(m.away)}<span class="team-name">${esc(m.away.name)}</span></div>
@@ -266,7 +282,7 @@
         <div>${esc(m.round)}</div>
       </div>
       ${jpLabels(m)}
-    </button>`;
+    </button></div>`;
   }
 
   function render() {
@@ -292,7 +308,6 @@
   function openSheet(m) {
     const [h1] = m.home.colors || ['#334155'];
     const [a1] = m.away.colors || ['#0f172a'];
-    const w = watched.has(m.id);
     sheet.innerHTML = `
       <div class="sheet-head"><span class="src">${esc(m.comp)} ${esc(m.round)}</span>
         <button class="icon-btn" data-act="close">閉じる</button></div>
@@ -302,12 +317,16 @@
           <button class="play-btn" data-act="play" id="playBtn"><span>▶ 再生する</span></button>
         </div>
       </div>
+      <div class="yt-full" aria-hidden="true"><div id="ytFull"></div></div>
       <div class="team">${badge(m.home)}<span class="team-name">${esc(m.home.name)}</span></div>
       <div class="team">${badge(m.away)}<span class="team-name">${esc(m.away.name)}</span></div>
       ${jpLabels(m)}
       <div class="sheet-actions">
         <span class="src" style="margin-right:auto;align-self:center">提供: ${esc(m.src)}(YouTube)</span>
-        <button class="icon-btn" data-act="toggle">${w ? '未視聴に戻す' : '見たことにする'}</button>
+        <button class="icon-btn full-btn" data-act="full">
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          全画面で再生
+        </button>
       </div>
       <div class="comments">
         <button class="secondary" data-act="comments" id="cBtn">${commentsLabel(m)}</button>
@@ -326,8 +345,12 @@
     clearTimeout(fallbackTimer);
     pending = null;
     playerReady = false;
+    fullReady = false;
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     if (player && player.destroy) player.destroy();
+    if (fullPlayer && fullPlayer.destroy) fullPlayer.destroy();
     player = null;
+    fullPlayer = null;
     wrap.classList.remove('open');
     sheet.classList.remove('tall');
     sheet.innerHTML = '';
@@ -349,6 +372,11 @@
   }
 
   let playerReady = false;
+  // 全画面専用のプレイヤー。iPhoneでは「画面内で再生しない」設定にすると、再生と同時にiPhone標準の
+  // 全画面プレーヤーに切り替わり、YouTubeのタイトル(ネタバレ入り)が表示されない
+  let fullPlayer = null;
+  let fullReady = false;
+  const isIPhone = /iPhone|iPod/.test(navigator.userAgent);
   let pending = null; // 準備が終わる前に押されたときの再生予約 { at }
   let fallbackTimer = null;
   const noCaptions = (p) => { try { p.unloadModule('captions'); p.unloadModule('cc'); } catch {} };
@@ -393,7 +421,45 @@
         },
       },
     });
+    fullReady = false;
+    fullPlayer = new YT.Player('ytFull', {
+      videoId: id,
+      playerVars: { playsinline: 0, rel: 0, cc_load_policy: 0 },
+      events: {
+        onReady: (e) => { fullReady = true; noCaptions(e.target); },
+        onApiChange: (e) => noCaptions(e.target),
+        onStateChange: (e) => {
+          const S = YT.PlayerState;
+          if (e.data === S.PLAYING) { watched.add(id); saveWatched(); }
+          // iPad・Macの全画面で最後まで見たら、おすすめ動画が出る前に全画面を抜ける
+          if (e.data === S.ENDED && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+        },
+      },
+    });
   }
+
+  // 全画面で再生(画面内のプレイヤーで途中まで見ていたら、その続きから)
+  function startFullscreen() {
+    if (!fullPlayer || !fullReady) { startPlayback(); return; } // 準備が間に合わないときは普通に再生
+    let from = 0;
+    if (player && playerReady && !coverShown()) {
+      from = player.getCurrentTime() || 0;
+      player.pauseVideo();
+    }
+    if (from > 1) fullPlayer.seekTo(from, true);
+    if (!isIPhone) {
+      // iPad・Macは全画面の仕組みでプレイヤーを画面いっぱいにする(iPhoneは再生と同時に自動で全画面になる)
+      const frame = fullPlayer.getIframe();
+      const req = frame.requestFullscreen || frame.webkitRequestFullscreen;
+      if (req) Promise.resolve(req.call(frame)).catch(() => {});
+    }
+    fullPlayer.unMute();
+    fullPlayer.playVideo();
+  }
+  // iPad・Macで全画面を抜けたら、全画面用のプレイヤーは止める
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && fullPlayer && fullReady) fullPlayer.pauseVideo();
+  });
 
   // 再生する(at を指定するとその秒から)。ボタンを押した流れのまま呼ぶので、iPhoneでも音ありで流れやすい
   function startPlayback(at = null) {
@@ -414,10 +480,13 @@
     }, 900);
   }
 
-  // コメントの時間リンクから、その時点へ移動して再生
+  // コメントの時間リンクから、その時点へ移動して再生。
+  // 移動するとYouTubeのプレイヤーが数秒だけ操作ボタンを表示するので、3秒前から流して場面が隠れないようにする
+  const LEAD_SECONDS = 3;
   function seekTo(at) {
-    if (coverShown()) { startPlayback(at); return; }
-    player.seekTo(at, true);
+    const from = Math.max(0, at - LEAD_SECONDS);
+    if (coverShown()) { startPlayback(from); return; }
+    player.seekTo(from, true);
     player.playVideo();
   }
 
@@ -541,7 +610,55 @@
     }
   }
 
+  // ---- 一覧のスワイプで「見た/未視聴」を切り替え(メールアプリのような動き) ----
+  const SWIPE_DISTANCE = 72;
+  const listEl = document.getElementById('list');
+  let drag = null;
+  let suppressClick = false; // スワイプの直後に試合が開いてしまわないように
+  listEl.addEventListener('pointerdown', (e) => {
+    const c = e.target.closest('.card');
+    if (!c || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    drag = { card: c, bg: c.previousElementSibling, x: e.clientX, y: e.clientY, dx: 0, moving: false, pid: e.pointerId };
+  });
+  listEl.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.pid) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.moving) {
+      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { drag = null; return; } // 縦のスクロールは邪魔しない
+      if (Math.abs(dx) < 10) return;
+      drag.moving = true;
+      drag.card.classList.add('dragging');
+      try { drag.card.setPointerCapture(e.pointerId); } catch {}
+    }
+    drag.dx = dx;
+    drag.card.style.transform = `translateX(${dx}px)`;
+    drag.bg.classList.toggle('left', dx < 0);
+    drag.bg.classList.toggle('ready', Math.abs(dx) >= SWIPE_DISTANCE);
+  });
+  const endDrag = (e) => {
+    if (!drag || e.pointerId !== drag.pid) return;
+    const { card: c, bg, dx, moving } = drag;
+    drag = null;
+    if (!moving) return;
+    suppressClick = true;
+    setTimeout(() => { suppressClick = false; }, 400);
+    c.classList.remove('dragging');
+    c.style.transform = '';
+    // 途中で中断された(スクロールに切り替わった等)ときは切り替えず、元に戻すだけ
+    if (e.type === 'pointerup' && Math.abs(dx) >= SWIPE_DISTANCE) {
+      const id = c.dataset.id;
+      watched.has(id) ? watched.delete(id) : watched.add(id);
+      saveWatched();
+      setTimeout(render, 220);
+    } else {
+      bg.classList.remove('ready', 'left');
+    }
+  };
+  listEl.addEventListener('pointerup', endDrag);
+  listEl.addEventListener('pointercancel', endDrag);
+
   document.addEventListener('click', (e) => {
+    if (suppressClick && e.target.closest('.card')) return;
     const chip = e.target.closest('.chip');
     if (chip) { filter = chip.dataset.f; store.set('filter', filter); renderChips(); render(); return; }
     const c = e.target.closest('.card');
@@ -561,12 +678,7 @@
     if (act === 'comments') toggleComments();
     if (act === 'corder') { comments.order = e.target.closest('[data-o]').dataset.o; comments.shown = PAGE; renderComments(); }
     if (act === 'cmore') { comments.shown += PAGE; renderComments(); }
-    if (act === 'toggle') {
-      const id = sheet.dataset.id;
-      watched.has(id) ? watched.delete(id) : watched.add(id);
-      saveWatched();
-      e.target.textContent = watched.has(id) ? '未視聴に戻す' : '見たことにする';
-    }
+    if (act === 'full') startFullscreen();
     if (e.target === wrap && Date.now() - openedAt > 500) closeSheet();
   });
   unwatchedBox.addEventListener('change', () => { store.set('unwatchedOnly', unwatchedBox.checked); render(); });
@@ -576,8 +688,9 @@
   renderChips();
   render();
   const upd = new Date(DATA.generatedAt);
-  document.getElementById('footer').textContent =
-    `最終更新 ${upd.getMonth() + 1}/${upd.getDate()} ${String(upd.getHours()).padStart(2, '0')}:${String(upd.getMinutes()).padStart(2, '0')} ・ ${DATA.matches.length}試合`;
+  document.getElementById('footer').innerHTML =
+    `最終更新 ${upd.getMonth() + 1}/${upd.getDate()} ${String(upd.getHours()).padStart(2, '0')}:${String(upd.getMinutes()).padStart(2, '0')} ・ ${DATA.matches.length}試合`
+    + '<br>試合を左右にスワイプすると、見た/未視聴を切り替えられます';
 })();
 </script>
 </body>
