@@ -185,13 +185,13 @@
   <div class="title-row">
     <h1 aria-label=".Highlight"><span class="dot">.</span><svg class="h-mark" viewBox="196 136 218 240" aria-hidden="true"><rect x="196" y="136" width="62" height="240"/><rect x="352" y="136" width="62" height="240"/><path class="tri" d="M258 196 L258 316 L352 256 Z"/></svg>ighlight</h1>
     <div class="title-actions">
-      <label class="switch"><input type="checkbox" role="switch" id="unwatchedOnly">未視聴のみ</label>
       <button class="bell" data-act="notify" aria-label="通知の設定">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
           <path d="M12 2.8a6.2 6.2 0 0 0-6.2 6.2v4.1l-1.6 2.6a.9.9 0 0 0 .8 1.4h14a.9.9 0 0 0 .8-1.4l-1.6-2.6V9A6.2 6.2 0 0 0 12 2.8z"/>
           <path d="M9.6 18.6a2.4 2.4 0 0 0 4.8 0z"/>
         </svg>
       </button>
+      <label class="switch">未視聴のみ<input type="checkbox" role="switch" id="unwatchedOnly"></label>
     </div>
   </div>
 </header>
@@ -214,6 +214,8 @@
   const FILTERS = [
     { id: 'all', label: 'すべて' },
     { id: 'jp', label: '<span class="jpn-mini">JPN</span>出場' },
+    { id: 'cl', label: 'CL' },
+    { id: 'el', label: 'EL' },
     { id: 'premier', label: 'プレミア' },
     { id: 'laliga', label: 'ラ・リーガ' },
     { id: 'bundesliga', label: 'ブンデス' },
@@ -223,8 +225,7 @@
     { id: 'portugal', label: 'ポルトガル' },
     { id: 'belgium', label: 'ベルギー' },
     { id: 'j1', label: 'J1' },
-    { id: 'europe', label: '欧州カップ' },
-    { id: 'cup', label: 'カップ戦' },
+    { id: 'other', label: 'その他' },
   ];
 
   // 端末ごとの「見た」記録(使えない環境でも動くように)
@@ -235,6 +236,7 @@
   const watched = new Set(store.get('watched', []));
   const saveWatched = () => store.set('watched', [...watched]);
   let filter = store.get('filter', 'all');
+  if (!FILTERS.some((f) => f.id === filter)) filter = 'all'; // なくなった分類が保存されていたら「すべて」に戻す
   const unwatchedBox = document.getElementById('unwatchedOnly');
   unwatchedBox.checked = store.get('unwatchedOnly', false);
 
@@ -615,7 +617,7 @@
   }
 
   // ---- 一覧のスワイプで「見た/未視聴」を切り替え(メールアプリのような動き) ----
-  const SWIPE_DISTANCE = 72;
+  const SWIPE_DISTANCE = 120; // 切り替えに必要なスライド幅(カード幅の3分の1くらい)
   const listEl = document.getElementById('list');
   let drag = null;
   let suppressClick = false; // スワイプの直後に試合が開いてしまわないように
