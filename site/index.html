@@ -11,6 +11,10 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
+<!-- 見出し「Highlight」用の書体(Montserrat。使う文字だけ読み込む) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&text=Highlight&display=swap">
 <title>ネタバレなしハイライト</title>
 <style>
   :root {
@@ -38,7 +42,7 @@
     padding: calc(env(safe-area-inset-top) + 10px) 16px 10px; border-bottom: 1px solid var(--line);
   }
   .title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  h1 { font-size: 22px; margin: 0; font-weight: 800; letter-spacing: -.01em; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
+  h1 { font-size: 24px; line-height: 1; margin: 0; font-weight: 900; letter-spacing: -.035em; font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
   /* 「未視聴のみ」のスイッチ(iPhoneの設定画面のような切り替え) */
   .switch { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); user-select: none; -webkit-user-select: none; cursor: pointer; }
   .switch input {
