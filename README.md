@@ -21,6 +21,7 @@ DAZN Japan / U-NEXT フットボール / WOWOWサッカー の公式YouTubeチ�
 | `config/notify.json` | 通知の対象(チームと日本人選手)。一覧の表示には関係しない。takuがチャットで頼んだらここを書き換える |
 | `scripts/fetch-youtube.mjs` | YouTube Data API で3社の過去15日分の動画を取得(キーは GitHub の `YOUTUBE_API_KEY`) |
 | `scripts/build.mjs` | 動画一覧から対象試合(過去14日)を選び、`site/data.js` を作る |
+| `scripts/fetch-comments.mjs` | 一覧の動画のYouTubeコメント(人気順・新しい順 各100件)を `site/comments/` に。公開から24時間以内は30分ごと、24〜48時間は2時間、48〜72時間は6時間、それ以降は24時間ごとに取り直す(前回分は公開中のサイトから引き継ぐ) |
 | `scripts/notify.mjs` / `webpush.mjs` | 7・11・16時に新着をまとめて iPhone へ通知(Web Push。外部の部品なし) |
 | `scripts/make-icons.mjs` | ホーム画面用アイコンを作る |
 | `state/notify.json` | 通知の記録(自動更新が書き込む。手で触らない) |
