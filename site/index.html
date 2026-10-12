@@ -14,31 +14,31 @@
 <title>ネタバレなしハイライト</title>
 <style>
   :root {
-    --bg: #f3f5f8; --surface: #ffffff; --text: #111827; --muted: #6b7280; --line: #e5e7eb;
-    --accent: #0f766e; --accent-ink: #ffffff; --chip: #e9eef3; --dot: #ef4444; --sheet-shade: rgba(0,0,0,.45);
-    --jp-bg: #fff1f2; --jp-ink: #be123c;
+    --bg: #edf0f4; --surface: #ffffff; --text: #111827; --muted: #6b7280; --line: #e0e4ea;
+    --accent: #0f766e; --accent-ink: #ffffff; --chip: #e4e9ef; --dot: #ef4444; --sheet-shade: rgba(0,0,0,.45);
+    --jp-bg: #fff1f2; --jp-ink: #be123c; --bar: rgba(237, 240, 244, .92);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0f1720; --surface: #17212b; --text: #e5e7eb; --muted: #94a3b8; --line: #243241;
-      --accent: #2dd4bf; --accent-ink: #062b27; --chip: #1f2b37; --dot: #f87171; --sheet-shade: rgba(0,0,0,.6);
-      --jp-bg: #3b1520; --jp-ink: #fda4af;
+      --bg: #0f1720; --surface: #1c2734; --text: #e5e7eb; --muted: #94a3b8; --line: #2a394a;
+      --accent: #2dd4bf; --accent-ink: #062b27; --chip: #223040; --dot: #f87171; --sheet-shade: rgba(0,0,0,.6);
+      --jp-bg: #3b1520; --jp-ink: #fda4af; --bar: rgba(15, 23, 32, .92);
     }
   }
   :root[data-theme="dark"] {
-    --bg: #0f1720; --surface: #17212b; --text: #e5e7eb; --muted: #94a3b8; --line: #243241;
-    --accent: #2dd4bf; --accent-ink: #062b27; --chip: #1f2b37; --dot: #f87171; --sheet-shade: rgba(0,0,0,.6);
-    --jp-bg: #3b1520; --jp-ink: #fda4af;
+    --bg: #0f1720; --surface: #1c2734; --text: #e5e7eb; --muted: #94a3b8; --line: #2a394a;
+    --accent: #2dd4bf; --accent-ink: #062b27; --chip: #223040; --dot: #f87171; --sheet-shade: rgba(0,0,0,.6);
+    --jp-bg: #3b1520; --jp-ink: #fda4af; --bar: rgba(15, 23, 32, .92);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text); }
   body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; -webkit-text-size-adjust: 100%; }
   header {
     position: sticky; top: 0; z-index: 5; background: var(--bg);
-    padding: calc(env(safe-area-inset-top) + 12px) 16px 8px; border-bottom: 1px solid var(--line);
+    padding: calc(env(safe-area-inset-top) + 10px) 16px 10px; border-bottom: 1px solid var(--line);
   }
   .title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  h1 { font-size: 20px; margin: 0; letter-spacing: .02em; }
+  h1 { font-size: 22px; margin: 0; font-weight: 800; letter-spacing: -.01em; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
   /* 「未視聴のみ」のスイッチ(iPhoneの設定画面のような切り替え) */
   .switch { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); user-select: none; -webkit-user-select: none; cursor: pointer; }
   .switch input {
@@ -51,7 +51,14 @@
   }
   .switch input:checked { background: var(--accent); border-color: var(--accent); }
   .switch input:checked::after { transform: translateX(14px); }
-  .chips { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 4px; scrollbar-width: none; }
+  /* 絞り込みボタンは親指で押しやすいよう画面の下に固定 */
+  .chips {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
+    display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+    padding: 10px 16px calc(env(safe-area-inset-bottom) + 10px);
+    background: var(--bar); border-top: 1px solid var(--line);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  }
   .chips::-webkit-scrollbar { display: none; }
   .chip {
     flex: none; border: 0; border-radius: 999px; padding: 7px 12px; font-size: 14px;
@@ -93,7 +100,8 @@
   .sheet .team-name { font-size: 16px; }
   .sheet .jp { margin-top: 8px; }
   .empty { text-align: center; color: var(--muted); padding: 48px 0; }
-  footer { color: var(--muted); font-size: 12px; text-align: center; padding: 16px; }
+  /* 下の絞り込みボタンに最後の試合が隠れないよう、そのぶん余白をとる */
+  footer { color: var(--muted); font-size: 12px; text-align: center; padding: 16px 16px calc(env(safe-area-inset-bottom) + 72px); }
 
   /* 再生シート */
   .sheet-wrap { position: fixed; inset: 0; background: var(--sheet-shade); display: none; z-index: 20; align-items: flex-end; justify-content: center; }
@@ -131,7 +139,7 @@
 <body>
 <header>
   <div class="title-row">
-    <h1>ハイライト</h1>
+    <h1>Highlight</h1>
     <div class="title-actions">
       <label class="switch"><input type="checkbox" role="switch" id="unwatchedOnly">未視聴のみ</label>
       <button class="bell" data-act="notify" aria-label="通知の設定">
@@ -142,10 +150,10 @@
       </button>
     </div>
   </div>
-  <nav class="chips" id="chips" aria-label="絞り込み"></nav>
 </header>
 <main id="list"></main>
 <footer id="footer"></footer>
+<nav class="chips" id="chips" aria-label="絞り込み"></nav>
 
 <div class="sheet-wrap" id="sheetWrap" role="dialog" aria-modal="true" aria-label="ハイライトを再生">
   <div class="sheet" id="sheet"></div>
