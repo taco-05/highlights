@@ -36,6 +36,7 @@ takuの「ネタバレなしで欧州サッカー(+J1)のハイライトを見�
 - 再生: 試合を開いた時点でプレイヤーを見えない状態で準備 → 「▶ 再生する」1回で**音あり**再生(iPhoneに止められたら音なしで開始)。字幕は外す。再生後はプレイヤーを隠して「もう一度再生」(おすすめ動画のネタバレ防止)
 - 「全画面で再生」(緑のボタン): 画面外に置いた全画面専用プレイヤー(playsinline=0)で再生 → iPhoneは標準全画面になりタイトルが出ない。iPad・Macはタイトルが出ることがある
 - 再生画面: 動画を上に固定し、チーム名・JPN・コメントはその下でスクロール。コメント中の「1:23」等はタップでその**4秒前**から再生(移動直後にYouTubeの表示が約4秒出るため)
+- 更新: 一覧の一番上で下に引っぱると読み直す(64px)。開いたまま30分以上たって戻ったときも自動で読み直す(試合の画面を開いているときは除く)
 - 見た/未視聴: 一覧のカードを左右スワイプで切り替え(反応開始24px、切り替え120px、戻り0.45秒)
 - 見た目: 見出し「.Highlight」(Montserrat Black、「.」と「H」の中の▶は強調色、Hはアイコンと同じ形のSVG)。上部は左から ベル / 未視聴のみ / スイッチ。アイコンは「緑の.+白いH(横棒が緑の▶)+背景にうっすらピッチのライン」(`scripts/make-icons.mjs`)
 
@@ -44,7 +45,7 @@ takuの「ネタバレなしで欧州サッカー(+J1)のハイライトを見�
 `.github/workflows/update.yml` が30分ごと(と push 時)に動く:
 動画取得(`fetch-youtube.mjs`)→ 対象試合の選別(`build.mjs` → `site/data.js`)→ コメント取得(`fetch-comments.mjs` → `site/comments/`)→ GitHub Pages に公開 → 通知(`notify.mjs`。7・11・16時を過ぎていて未送信なら)→ 通知の記録 `state/notify.json` をボットがコミット
 
-- GitHub の秘密の保管場所: `YOUTUBE_API_KEY`(takuが発行)、`VAPID_PRIVATE_KEY`(通知の送り主の証明。対の公開鍵は `site/push-config.js`)、`PUSH_SUBSCRIPTION`(通知先。iPhoneのアプリの🔔ベル→「通知をオンにする」→ 登録コードを taku がGitHubに登録。1行に1台)
+- GitHub の秘密の保管場所: `YOUTUBE_API_KEY`(takuが発行)、`VAPID_PRIVATE_KEY`(通知の送り主の証明。対の公開鍵は `site/push-config.js`)、`PUSH_SUBSCRIPTION`(iPhoneの通知先。アプリの🔔ベル→「通知をオンにする」→ 登録コードを taku がGitHubに登録)、`PUSH_SUBSCRIPTION_IPAD`(iPadの通知先。iPadではアプリがこの名前を案内する)
 - 無料枠: YouTube Data API 1日10,000のうち、動画取得とコメントで合計数千程度
 - AI点検用: 各回の成果物「review」に `review.json`(未登録の日本人らしき名前の候補など)。`gh run download <run> -n review` で取得し、本物の選手なら `japanese-players.json` に追加、名前でなければ stopwords に追加
 - `site/data.js`・`site/comments/`・`review.json`・`data/` は自動生成なので Git には入れない
@@ -64,10 +65,12 @@ takuの「ネタバレなしで欧州サッカー(+J1)のハイライトを見�
 - iPhone 固有の動き(再生・全画面・通知)は手元で確かめられないので、taku に実機確認をお願いする
 - 変更したら taku に「アプリを一度終了して開き直すと反映される」と伝える
 
+- 2026-10-13: GitHub Actions の部品を最新版に更新し、土台を ubuntu-24.04 に固定(ubuntu-latest の Ubuntu 26 移行を避けるため)
+
 ## これからの候補(未着手)
 
 - **クロードによる週1回の定期点検**(review.json の名前追加、通知・自動更新が止まっていないか、無料枠の使用量)— 提案済み・未設定
-- iPadでも通知を受け取る(`PUSH_SUBSCRIPTION` に2行目を追加)
+- iPadでも通知を受け取る(仕組みは用意済み。taku がiPadで登録 → `PUSH_SUBSCRIPTION_IPAD` に登録してもらう)
+- WOWOWの「ロングハイライト／CL2026-27 …」形式(【】に対戦カードがない)への対応と、3分版との重複の扱い(2026-10-13 に調査・taku に方針確認中)
 - 公開に向けて: 受付係(Cloudflare等)でアプリ内の通知設定(チーム・選手の選択)と通知先の自動登録、プライバシーポリシー、Montserrat の自前配信など
 - JPNの精度改善(API-Football を試す)/ルヴァン・天皇杯の情報源探し
-- GitHub Actions の古い部品の更新(Node 20 の非推奨警告が出ている。ubuntu-latest は 2026-10-19 から Ubuntu 26 へ移行予定)
