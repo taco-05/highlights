@@ -664,14 +664,18 @@
 
   // 絞り込みを切り替える(一覧は先頭から、選んだボタンは下のバーの真ん中あたりに見えるように)
   const chipsEl = document.getElementById('chips');
+  // 下のバーで選ばれているボタンを切り替え、真ん中あたりに見えるよう横に動かす
+  function markChip(id) {
+    for (const c of chipsEl.querySelectorAll('.chip')) c.setAttribute('aria-pressed', String(c.dataset.f === id));
+    const c = chipsEl.querySelector(`[data-f="${id}"]`);
+    if (c) chipsEl.scrollTo({ left: c.offsetLeft - (chipsEl.clientWidth - c.offsetWidth) / 2, behavior: 'smooth' });
+  }
   function setFilter(id) {
     filter = id;
     store.set('filter', filter);
-    renderChips();
     render();
     window.scrollTo(0, 0);
-    const c = chipsEl.querySelector(`[data-f="${id}"]`);
-    if (c) chipsEl.scrollTo({ left: c.offsetLeft - (chipsEl.clientWidth - c.offsetWidth) / 2, behavior: 'smooth' });
+    markChip(id);
   }
 
   // ---- 一覧を左右にスワイプすると、絞り込みを隣に切り替える(左へ払う=下のバーの右隣へ) ----
@@ -704,7 +708,8 @@
     }
   };
   const hideSides = () => { for (const d of [-1, 1]) sides[d].classList.remove('on'); };
-  const PAGE_MOVE = '.32s cubic-bezier(.2, 0, 0, 1)';
+  const PAGE_MS = 480; // 画面が移る時間(taku の希望でゆっくりめ)
+  const PAGE_MOVE = `${PAGE_MS}ms cubic-bezier(.3, .1, .2, 1)`;
   listEl.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     drag = { x: e.clientX, y: e.clientY, dx: 0, moving: false, pid: e.pointerId, t: 0 };
@@ -743,16 +748,17 @@
     const fast = Math.abs(dx) > 30 && Math.abs(dx) / (performance.now() - t) > 0.5;
     if (e.type !== 'pointerup' || !target || (Math.abs(dx) < innerWidth / 4 && !fast)) {
       placePages(0, `transform ${PAGE_MOVE}`);
-      setTimeout(hideSides, 330);
+      setTimeout(hideSides, PAGE_MS + 10);
       return;
     }
     // 隣の一覧がそのまま画面に入りきったら、本物の一覧に差し替える(見た目は変わらない)
     placePages(-dir * innerWidth, `transform ${PAGE_MOVE}`);
+    markChip(target.id); // 下のボタンの色は、画面が動き出すと同時に移す
     setTimeout(() => {
       setFilter(target.id);
       placePages(0);
       hideSides();
-    }, 330);
+    }, PAGE_MS + 10);
   };
   listEl.addEventListener('pointerup', endDrag);
   listEl.addEventListener('pointercancel', endDrag);
