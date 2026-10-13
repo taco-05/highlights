@@ -53,6 +53,9 @@ takuの「ネタバレなしで欧州サッカー(+J1)のハイライトを見�
 
 ## 作業の進め方(手元)
 
+- 手元の場所: `~/Documents/highlights/soccer-highlights`(これがリポジトリ本体。2026-10-13 に1つ目のチャットの一時フォルダから移した。`.git` は GitHub から取り直して復元済み)
+- 新しいチャットは「書類 → highlights → soccer-highlights」フォルダで開く(このCLAUDE.mdが自動で読まれる)
+- 確認用サーバーの設定 `.claude/launch.json` は `~/Documents/highlights/.claude/` と `soccer-highlights/.claude/` の両方にある(Gitには入れていない)
 - GitHub CLI(gh)は Mac のシステムには入れておらず、プロジェクト内の `tools/gh/gh_2.102.0_macOS_arm64/bin/gh` を使っている(`tools/` は Git に入れていない)。ログインは taku の承認済み(キーチェーンに保存)。キャッシュ用に `XDG_CACHE_HOME` を書き込める場所に向けて使う
 - git の認証はリポジトリ単位の設定 `credential.https://github.com.helper` が上の gh の絶対パスを指している。**フォルダを移したら付け直す**:
   `git config --replace-all credential.https://github.com.helper "!'<新しい場所>/tools/gh/gh_2.102.0_macOS_arm64/bin/gh' auth git-credential"`
