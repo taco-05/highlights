@@ -37,6 +37,8 @@
   * { box-sizing: border-box; }
   /* 画面の端でのゴムのような跳ね返りは止める(下に引っぱって更新の動きと重ならないように) */
   html, body { margin: 0; background: var(--bg); color: var(--text); overscroll-behavior-y: none; }
+  /* 一覧を横にスワイプしている間、画面が横にずれないように */
+  body { overflow-x: hidden; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; -webkit-text-size-adjust: 100%; }
   header {
     position: sticky; top: 0; z-index: 5; background: var(--bg);
@@ -70,6 +72,10 @@
     background: var(--chip); color: var(--text); cursor: pointer;
   }
   .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  /* 長押しで並び替え(長押ししても文字の選択やメニューが出ないように) */
+  .chip { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .chips.reordering .chip { transition: transform .2s cubic-bezier(.4, 0, .2, 1); }
+  .chips.reordering .chip.lifted { transition: none; position: relative; z-index: 1; box-shadow: 0 6px 16px rgba(0,0,0,.35); }
   /* 下に引っぱって更新 */
   .ptr { height: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--muted); }
   .ptr.back { transition: height .55s cubic-bezier(.4, 0, .2, 1); }
@@ -77,7 +83,8 @@
   .ptr.ready svg { transform: rotate(180deg); }
   .ptr.loading svg { animation: ptr-spin .8s linear infinite; }
   @keyframes ptr-spin { to { transform: rotate(360deg); } }
-  main { padding: 8px 16px calc(env(safe-area-inset-bottom) + 24px); max-width: 1100px; margin: 0 auto; }
+  /* 一覧は横スワイプで絞り込みを切り替える(縦のスクロールはそのまま)。試合が少なくてもスワイプできる高さをとる */
+  main { padding: 8px 16px calc(env(safe-area-inset-bottom) + 24px); max-width: 1100px; margin: 0 auto; touch-action: pan-y; min-height: 70vh; }
   h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 14px 2px 6px; }
   .grid { display: grid; gap: 6px; grid-template-columns: 1fr; }
   @media (min-width: 700px) { .grid { grid-template-columns: 1fr 1fr; } }
@@ -129,6 +136,11 @@
   @media (min-width: 700px) { .sheet.tall { height: min(92vh, 860px); } }
   .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
   .icon-btn { border: 0; background: var(--chip); color: var(--text); border-radius: 999px; padding: 7px 12px; font-size: 14px; cursor: pointer; }
+  .head-btns { display: flex; gap: 8px; }
+  /* 見た/未視聴の切り替え(目のマーク=見た、斜線入りの目=未視聴) */
+  .watch-btn { display: grid; place-items: center; padding: 5px 12px; color: var(--muted); }
+  .watch-btn svg { fill: currentColor; }
+  .watch-btn.on { color: var(--accent); }
   /* 動画は画面の上に固定し、その下(チーム名・コメント)だけがスクロールする */
   .player-wrap { position: sticky; top: -14px; z-index: 3; background: var(--surface); margin: 0 -16px; padding: 0 16px 10px; }
   .player { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; }
@@ -141,17 +153,6 @@
   /* 全画面専用のプレイヤーは画面の外に置いておく(再生すると全画面に切り替わる) */
   .yt-full { position: fixed; left: -10000px; top: 0; width: 320px; height: 180px; }
   .full-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--accent-ink); font-weight: 700; padding: 8px 14px; }
-  /* 一覧のスワイプ */
-  .swipe { position: relative; border-radius: 12px; overflow: hidden; }
-  .swipe-bg {
-    position: absolute; inset: 0; display: flex; align-items: center; padding: 0 18px; border-radius: 12px;
-    background: var(--chip); color: var(--muted); font-size: 13px; font-weight: 700;
-  }
-  .swipe-bg.left { justify-content: flex-end; }
-  .swipe-bg.ready { background: var(--accent); color: var(--accent-ink); }
-  /* 指を離したときの戻り方: 0.45秒で、最後にふわっと止まる(Gmailなどと同じGoogleのデザインの標準の動き) */
-  .swipe .card { position: relative; touch-action: pan-y; transition: transform .45s cubic-bezier(.4, 0, .2, 1); }
-  .swipe .card.dragging { transition: none; }
   h1 .dot { color: var(--accent); }
   /* 見出しの「H」はアイコンと同じ形(2本の縦棒+間に▶)。高さは書体の大文字と同じ0.7em */
   h1 .h-mark { height: .7em; width: auto; fill: currentColor; vertical-align: baseline; margin: 0 .06em 0 .02em; }
@@ -248,6 +249,12 @@
   };
   const watched = new Set(store.get('watched', []));
   const saveWatched = () => store.set('watched', [...watched]);
+  // 絞り込みボタンの並び順(「すべて」は先頭に固定。長押しで並び替えた順を端末に保存。新しく増えた分類は最後に足す)
+  const MOVABLE = FILTERS.slice(1).map((f) => f.id);
+  function orderedFilters() {
+    const saved = store.get('chipOrder', []).filter((id) => MOVABLE.includes(id));
+    return [FILTERS[0], ...[...saved, ...MOVABLE.filter((id) => !saved.includes(id))].map((id) => FILTERS.find((f) => f.id === id))];
+  }
   let filter = store.get('filter', 'all');
   if (!FILTERS.some((f) => f.id === filter)) filter = 'all'; // なくなった分類が保存されていたら「すべて」に戻す
   const unwatchedBox = document.getElementById('unwatchedOnly');
@@ -274,7 +281,7 @@
   };
 
   function renderChips() {
-    document.getElementById('chips').innerHTML = FILTERS.map((f) =>
+    document.getElementById('chips').innerHTML = orderedFilters().map((f) =>
       `<button class="chip" data-f="${f.id}" aria-pressed="${f.id === filter}">${f.label}</button>`).join('');
   }
 
@@ -287,11 +294,9 @@
   const jpLabels = (m) => m.jp.length
     ? `<div class="jp">${m.jp.map((n) => `<span class="jpn"><b>JPN</b>${esc(n)}</span>`).join('')}</div>` : '';
 
-  // カードは左右にスワイプすると「見た/未視聴」を切り替えられる(下にあるのはスワイプ中に見える帯)
   function card(m) {
     const w = watched.has(m.id);
-    return `<div class="swipe"><div class="swipe-bg"><span>${w ? '未視聴に戻す' : '見たことにする'}</span></div>
-      <button class="card${w ? ' watched' : ''}" data-id="${m.id}">
+    return `<button class="card${w ? ' watched' : ''}" data-id="${m.id}">
       <div>
         <div class="team">${badge(m.home)}<span class="team-name">${esc(m.home.name)}</span></div>
         <div class="team">${badge(m.away)}<span class="team-name">${esc(m.away.name)}</span></div>
@@ -301,7 +306,7 @@
         <div>${esc(m.round)}</div>
       </div>
       ${jpLabels(m)}
-    </button></div>`;
+    </button>`;
   }
 
   function render() {
@@ -329,7 +334,8 @@
     const [a1] = m.away.colors || ['#0f172a'];
     sheet.innerHTML = `
       <div class="sheet-head"><span class="src">${esc(m.comp)} ${esc(m.round)}</span>
-        <button class="icon-btn" data-act="close">閉じる</button></div>
+        <div class="head-btns"><button class="icon-btn watch-btn" data-act="watch" id="watchBtn"></button>
+        <button class="icon-btn" data-act="close">閉じる</button></div></div>
       <div class="player-wrap">
         <div class="player" id="player" style="--home:${h1};--away:${a1}">
           <div class="yt-box" id="ytBox"><div id="yt"></div></div>
@@ -353,11 +359,34 @@
       </div>`;
     comments = null;
     sheet.dataset.id = m.id;
+    updateWatchBtn();
     sheet.classList.add('tall');
     sheet.scrollTop = 0;
     openedAt = Date.now();
     wrap.classList.add('open');
     preparePlayer(m.id);
+  }
+
+  // 見た/未視聴のボタン(目のマークだけで示す。押すたびに切り替わる)
+  const EYE = '<path fill-rule="evenodd" d="M12 5C7 5 3.2 8.4 1.5 12c1.7 3.6 5.5 7 10.5 7s8.8-3.4 10.5-7C20.8 8.4 17 5 12 5zm0 3.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6z"/><circle cx="12" cy="12" r="1.9"/>';
+  const EYE_ON = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">${EYE}</svg>`;
+  const EYE_OFF = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+    <mask id="eyeCut"><rect width="24" height="24" fill="#fff"/><path d="M3.5 3.5l17 17" stroke="#000" stroke-width="5" stroke-linecap="round"/></mask>
+    <g mask="url(#eyeCut)">${EYE}</g><path d="M3.5 3.5l17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+  function updateWatchBtn() {
+    const btn = document.getElementById('watchBtn');
+    if (!btn) return;
+    const w = watched.has(sheet.dataset.id);
+    btn.innerHTML = w ? EYE_ON : EYE_OFF;
+    btn.classList.toggle('on', w);
+    btn.setAttribute('aria-pressed', String(w));
+    btn.setAttribute('aria-label', w ? '見た(押すと未視聴に戻す)' : '未視聴(押すと見たことにする)');
+  }
+  function toggleWatched() {
+    const id = sheet.dataset.id;
+    watched.has(id) ? watched.delete(id) : watched.add(id);
+    saveWatched();
+    updateWatchBtn();
   }
 
   function closeSheet() {
@@ -433,7 +462,7 @@
         onStateChange: (e) => {
           const S = YT.PlayerState;
           if (e.data === S.PLAYING || e.data === S.BUFFERING) clearTimeout(fallbackTimer);
-          if (e.data === S.PLAYING) { watched.add(id); saveWatched(); }
+          if (e.data === S.PLAYING) { watched.add(id); saveWatched(); updateWatchBtn(); }
           // 終わったらすぐプレイヤーを隠す(おすすめ動画に他の試合の結果が出るのを防ぐ)。
           // 画面は開いたままにして、続けてコメントを読めるようにする
           if (e.data === S.ENDED) showCover('▶ もう一度再生');
@@ -449,7 +478,7 @@
         onApiChange: (e) => noCaptions(e.target),
         onStateChange: (e) => {
           const S = YT.PlayerState;
-          if (e.data === S.PLAYING) { watched.add(id); saveWatched(); }
+          if (e.data === S.PLAYING) { watched.add(id); saveWatched(); updateWatchBtn(); }
           // iPad・Macの全画面で最後まで見たら、おすすめ動画が出る前に全画面を抜ける
           if (e.data === S.ENDED && document.fullscreenElement) document.exitFullscreen().catch(() => {});
         },
@@ -629,16 +658,32 @@
     }
   }
 
-  // ---- 一覧のスワイプで「見た/未視聴」を切り替え(メールアプリのような動き) ----
-  const SWIPE_DISTANCE = 120; // 切り替えに必要なスライド幅(カード幅の3分の1くらい)
-  const SWIPE_START = 24; // カードが動き始めるのに必要な横の移動
+  // 絞り込みを切り替える(一覧は先頭から、選んだボタンは下のバーの真ん中あたりに見えるように)
+  const chipsEl = document.getElementById('chips');
+  function setFilter(id) {
+    filter = id;
+    store.set('filter', filter);
+    renderChips();
+    render();
+    window.scrollTo(0, 0);
+    const c = chipsEl.querySelector(`[data-f="${id}"]`);
+    if (c) chipsEl.scrollTo({ left: c.offsetLeft - (chipsEl.clientWidth - c.offsetWidth) / 2, behavior: 'smooth' });
+  }
+
+  // ---- 一覧を左右にスワイプすると、絞り込みを隣に切り替える(左へ払う=下のバーの右隣へ) ----
+  const SWIPE_START = 24; // 動き始めるのに必要な横の移動(少し指がぶれただけでは動かない)
   const listEl = document.getElementById('list');
   let drag = null;
   let suppressClick = false; // スワイプの直後に試合が開いてしまわないように
+  const neighbor = (dir) => { const fs = orderedFilters(); return fs[fs.findIndex((f) => f.id === filter) + dir]; };
+  const setList = (x, opacity, transition) => {
+    listEl.style.transition = transition || 'none';
+    listEl.style.transform = x ? `translateX(${x}px)` : '';
+    listEl.style.opacity = opacity == null ? '' : String(opacity);
+  };
   listEl.addEventListener('pointerdown', (e) => {
-    const c = e.target.closest('.card');
-    if (!c || (e.pointerType === 'mouse' && e.button !== 0)) return;
-    drag = { card: c, bg: c.previousElementSibling, x: e.clientX, y: e.clientY, dx: 0, moving: false, pid: e.pointerId };
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    drag = { x: e.clientX, y: e.clientY, dx: 0, moving: false, pid: e.pointerId, t: 0 };
   });
   listEl.addEventListener('pointermove', (e) => {
     if (!drag || e.pointerId !== drag.pid) return;
@@ -649,40 +694,117 @@
         if (Math.abs(dy) > 10) drag = null;
         return;
       }
-      // 横に24px動くまでは反応しない(少し指がぶれただけでカードが動かないように)
       if (Math.abs(rawX) < SWIPE_START) return;
       drag.moving = true;
-      drag.card.classList.add('dragging');
-      try { drag.card.setPointerCapture(e.pointerId); } catch {}
+      drag.t = performance.now();
+      try { listEl.setPointerCapture(e.pointerId); } catch {}
     }
-    // 動き出しで跳ねないよう、反応し始めた位置を0としてカードを動かす
-    const dx = Math.sign(rawX) * Math.max(0, Math.abs(rawX) - SWIPE_START);
+    // 動き出しで跳ねないよう、反応し始めた位置を0として動かす。端(隣がない側)では重く、少しだけ動く
+    let dx = Math.sign(rawX) * Math.max(0, Math.abs(rawX) - SWIPE_START);
+    if (!neighbor(dx < 0 ? 1 : -1)) dx *= 0.25;
     drag.dx = dx;
-    drag.card.style.transform = `translateX(${dx}px)`;
-    drag.bg.classList.toggle('left', dx < 0);
-    drag.bg.classList.toggle('ready', Math.abs(dx) >= SWIPE_DISTANCE);
+    setList(dx, 1 - Math.min(0.4, Math.abs(dx) / innerWidth));
   });
   const endDrag = (e) => {
     if (!drag || e.pointerId !== drag.pid) return;
-    const { card: c, bg, dx, moving } = drag;
+    const { dx, moving, t } = drag;
     drag = null;
     if (!moving) return;
     suppressClick = true;
     setTimeout(() => { suppressClick = false; }, 400);
-    c.classList.remove('dragging');
-    c.style.transform = '';
-    // 途中で中断された(スクロールに切り替わった等)ときは切り替えず、元に戻すだけ
-    if (e.type === 'pointerup' && Math.abs(dx) >= SWIPE_DISTANCE) {
-      const id = c.dataset.id;
-      watched.has(id) ? watched.delete(id) : watched.add(id);
-      saveWatched();
-      setTimeout(render, 470); // 戻る動き(0.45秒)が終わってから表示を更新する
-    } else {
-      bg.classList.remove('ready', 'left');
+    const dir = dx < 0 ? 1 : -1;
+    const target = neighbor(dir);
+    // 画面幅の4分の1以上動かすか、素早く払ったら切り替え(途中で中断されたときは元に戻すだけ)
+    const fast = Math.abs(dx) > 30 && Math.abs(dx) / (performance.now() - t) > 0.5;
+    if (e.type !== 'pointerup' || !target || (Math.abs(dx) < innerWidth / 4 && !fast)) {
+      setList(0, null, 'transform .45s cubic-bezier(.4, 0, .2, 1), opacity .45s');
+      return;
     }
+    // 今の一覧を払った方向へ送り出し、次の一覧を反対側からスッと入れる
+    setList(-dir * innerWidth, 0, 'transform .2s cubic-bezier(.4, 0, 1, 1), opacity .2s');
+    setTimeout(() => {
+      setFilter(target.id);
+      setList(dir * innerWidth * 0.4, 0);
+      void listEl.offsetWidth;
+      setList(0, null, 'transform .35s cubic-bezier(0, 0, .2, 1), opacity .35s');
+    }, 200);
   };
   listEl.addEventListener('pointerup', endDrag);
   listEl.addEventListener('pointercancel', endDrag);
+
+  // ---- 絞り込みボタンを長押しして、横に動かすと並び替え(「すべて」は先頭に固定) ----
+  const LONG_PRESS = 450;
+  let cdrag = null;
+  let suppressChipClick = false;
+  chipsEl.addEventListener('contextmenu', (e) => e.preventDefault());
+  chipsEl.addEventListener('pointerdown', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip || chip.dataset.f === 'all' || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    cdrag = { chip, pid: e.pointerId, x: e.clientX, y: e.clientY, lastX: e.clientX, active: false };
+    cdrag.timer = setTimeout(startChipDrag, LONG_PRESS);
+  });
+  function startChipDrag() {
+    const d = cdrag;
+    if (!d) return;
+    d.active = true;
+    d.items = [...chipsEl.querySelectorAll('.chip')].filter((c) => c.dataset.f !== 'all')
+      .map((el) => ({ el, id: el.dataset.f, left: el.offsetLeft, width: el.offsetWidth }));
+    d.from = d.to = d.items.findIndex((it) => it.el === d.chip);
+    d.scroll0 = chipsEl.scrollLeft;
+    try { d.chip.setPointerCapture(d.pid); } catch {}
+    chipsEl.classList.add('reordering');
+    d.chip.classList.add('lifted');
+    suppressChipClick = true;
+    moveChip();
+    // 指をバーの端に寄せると、バーが自動で横に流れる
+    const edge = () => {
+      if (cdrag !== d) return;
+      const sp = d.lastX < 48 ? -6 : d.lastX > innerWidth - 48 ? 6 : 0;
+      if (sp) { chipsEl.scrollLeft += sp; moveChip(); }
+      requestAnimationFrame(edge);
+    };
+    requestAnimationFrame(edge);
+  }
+  function moveChip() {
+    const d = cdrag, me = d.items[d.from], first = d.items[0], last = d.items[d.items.length - 1];
+    const GAP = 8;
+    let shift = d.lastX - d.x + (chipsEl.scrollLeft - d.scroll0);
+    shift = Math.max(first.left - me.left, Math.min(last.left + last.width - me.left - me.width, shift));
+    d.chip.style.transform = `translateX(${shift}px) scale(1.08)`;
+    const center = me.left + me.width / 2 + shift;
+    d.to = d.items.filter((it, i) => i !== d.from && it.left + it.width / 2 < center).length;
+    d.items.forEach((it, i) => {
+      if (i === d.from) return;
+      const off = d.from < d.to && i > d.from && i <= d.to ? -(me.width + GAP)
+        : d.to < d.from && i >= d.to && i < d.from ? me.width + GAP : 0;
+      it.el.style.transform = off ? `translateX(${off}px)` : '';
+    });
+  }
+  chipsEl.addEventListener('pointermove', (e) => {
+    if (!cdrag || e.pointerId !== cdrag.pid) return;
+    cdrag.lastX = e.clientX;
+    if (cdrag.active) { moveChip(); return; }
+    // 長押しの前に指が動いたら、ふつうの横スクロール
+    if (Math.hypot(e.clientX - cdrag.x, e.clientY - cdrag.y) > 8) { clearTimeout(cdrag.timer); cdrag = null; }
+  });
+  // 並び替え中は、バーの横スクロールを止める
+  chipsEl.addEventListener('touchmove', (e) => { if (cdrag?.active) e.preventDefault(); }, { passive: false });
+  const endChipDrag = (e) => {
+    if (!cdrag || e.pointerId !== cdrag.pid) return;
+    const d = cdrag;
+    cdrag = null;
+    clearTimeout(d.timer);
+    if (!d.active) return;
+    const ids = d.items.map((it) => it.id);
+    const [moved] = ids.splice(d.from, 1);
+    ids.splice(d.to, 0, moved);
+    store.set('chipOrder', ids);
+    chipsEl.classList.remove('reordering');
+    renderChips();
+    setTimeout(() => { suppressChipClick = false; }, 300);
+  };
+  chipsEl.addEventListener('pointerup', endChipDrag);
+  chipsEl.addEventListener('pointercancel', endChipDrag);
 
   // ---- 一覧の一番上で下に引っぱると、最新の内容を読み直す ----
   const ptr = document.getElementById('ptr');
@@ -698,7 +820,7 @@
     setTimeout(() => location.reload(), 600); // 「更新中…」が一瞬で消えないよう少し待つ
   };
   document.addEventListener('touchstart', (e) => {
-    if (wrap.classList.contains('open') || window.scrollY > 0 || e.touches.length > 1 || ptr.classList.contains('loading')) return;
+    if (wrap.classList.contains('open') || window.scrollY > 0 || e.touches.length > 1 || ptr.classList.contains('loading') || e.target.closest('.chips')) return;
     pull = { x: e.touches[0].clientX, y: e.touches[0].clientY, h: 0, on: false };
   }, { passive: true });
   document.addEventListener('touchmove', (e) => {
@@ -739,11 +861,12 @@
   document.addEventListener('click', (e) => {
     if (suppressClick && e.target.closest('.card')) return;
     const chip = e.target.closest('.chip');
-    if (chip) { filter = chip.dataset.f; store.set('filter', filter); renderChips(); render(); return; }
+    if (chip) { if (!suppressChipClick) setFilter(chip.dataset.f); return; }
     const c = e.target.closest('.card');
     if (c) { openSheet(DATA.matches.find((m) => m.id === c.dataset.id)); return; }
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (act === 'close') closeSheet();
+    if (act === 'watch') toggleWatched();
     if (act === 'play') startPlayback();
     if (act === 'seek') seekTo(Number(e.target.closest('[data-t]').dataset.t));
     if (act === 'notify') openNotifySheet();
@@ -769,7 +892,8 @@
   const upd = new Date(DATA.generatedAt);
   document.getElementById('footer').innerHTML =
     `最終更新 ${upd.getMonth() + 1}/${upd.getDate()} ${String(upd.getHours()).padStart(2, '0')}:${String(upd.getMinutes()).padStart(2, '0')} ・ ${DATA.matches.length}試合`
-    + '<br>試合を左右にスワイプすると、見た/未視聴を切り替えられます'
+    + '<br>一覧を左右にスワイプすると、絞り込みを切り替えられます'
+    + '<br>下の絞り込みのボタンは、長押しで並び替えられます'
     + '<br>一番上で下に引っぱると、最新の内容に更新します';
 })();
 </script>
