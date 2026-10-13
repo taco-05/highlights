@@ -60,6 +60,7 @@ jobs:
         env:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           PUSH_SUBSCRIPTION: ${{ secrets.PUSH_SUBSCRIPTION }}
+          PUSH_SUBSCRIPTION_IPAD: ${{ secrets.PUSH_SUBSCRIPTION_IPAD }}
           NOTIFY_TEST: ${{ github.event.inputs.test }}
         run: node scripts/notify.mjs
       - name: 通知の記録を保存

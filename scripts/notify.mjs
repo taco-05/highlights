@@ -46,7 +46,8 @@ const wanted = (m) =>
   teams.includes(m.home.id) || teams.includes(m.away.id) ||
   m.jp.some((n) => players.includes(n));
 
-const subscriptions = (process.env.PUSH_SUBSCRIPTION || '')
+// 通知先は端末ごとに別の秘密の保管場所に入れる(iPhone: PUSH_SUBSCRIPTION / iPad: PUSH_SUBSCRIPTION_IPAD。どちらも1行に1台ずつ書ける)
+const subscriptions = [process.env.PUSH_SUBSCRIPTION, process.env.PUSH_SUBSCRIPTION_IPAD].filter(Boolean).join('\n')
   .split('\n').map((s) => s.trim()).filter(Boolean)
   .flatMap((s) => { try { return [JSON.parse(s)]; } catch { console.log('通知先の登録コードが読めませんでした(コピーし直してください)'); return []; } });
 

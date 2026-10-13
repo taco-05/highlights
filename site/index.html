@@ -598,7 +598,7 @@
           <ol class="steps">
             <li>「コードをコピー」を押す</li>
             <li>「GitHubの登録ページを開く」を押す</li>
-            <li><b>Name</b> に <code>PUSH_SUBSCRIPTION</code>、<b>Secret</b> にコピーしたコードを貼り付けて「Add secret」</li>
+            <li><b>Name</b> に <code>${isIOS && !isIPhone ? 'PUSH_SUBSCRIPTION_IPAD' : 'PUSH_SUBSCRIPTION'}</code>、<b>Secret</b> にコピーしたコードを貼り付けて「Add secret」</li>
           </ol>
           <div class="code" id="subCode">${esc(JSON.stringify(sub))}</div>
           <button class="primary" data-act="copy">コードをコピー</button>
