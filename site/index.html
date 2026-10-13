@@ -85,6 +85,10 @@
   @keyframes ptr-spin { to { transform: rotate(360deg); } }
   /* 一覧は横スワイプで絞り込みを切り替える(縦のスクロールはそのまま)。試合が少なくてもスワイプできる高さをとる */
   main { padding: 8px 16px calc(env(safe-area-inset-bottom) + 24px); max-width: 1100px; margin: 0 auto; touch-action: pan-y; min-height: 70vh; }
+  /* スワイプ中に左右から見える、隣の絞り込みの一覧(一覧と同じ見た目で、見出しの真下に置く) */
+  .page-side { position: fixed; left: 0; width: 100vw; bottom: 0; z-index: 1; overflow: hidden; background: var(--bg); pointer-events: none; display: none; }
+  .page-side.on { display: block; }
+  .page-side > div { padding: 8px 16px 0; max-width: 1100px; margin: 0 auto; }
   h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 14px 2px 6px; }
   .grid { display: grid; gap: 6px; grid-template-columns: 1fr; }
   @media (min-width: 700px) { .grid { grid-template-columns: 1fr 1fr; } }
@@ -138,11 +142,13 @@
   .icon-btn { border: 0; background: var(--chip); color: var(--text); border-radius: 999px; padding: 7px 12px; font-size: 14px; cursor: pointer; }
   .head-btns { display: flex; gap: 8px; }
   /* 見た/未視聴の切り替え(目のマーク=見た、斜線入りの目=未視聴) */
-  .watch-btn { display: grid; place-items: center; padding: 5px 12px; color: var(--muted); }
-  .watch-btn svg { fill: currentColor; }
-  .watch-btn.on { color: var(--accent); }
+  /* 見た/未視聴の切り替え(今の状態を表示。押すたびに切り替わる) */
+  .watch-btn { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+  .watch-btn .new-dot { width: 7px; height: 7px; }
+  .watch-btn svg { fill: none; stroke: currentColor; }
+  .watch-btn.on { color: var(--accent); font-weight: 600; }
   /* 動画は画面の上に固定し、その下(チーム名・コメント)だけがスクロールする */
-  .player-wrap { position: sticky; top: -14px; z-index: 3; background: var(--surface); margin: 0 -16px; padding: 0 16px 10px; }
+  .sheet-top { position: sticky; top: -14px; z-index: 3; background: var(--surface); margin: -14px -16px 0; padding: 14px 16px 10px; border-radius: inherit; }
   .player { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; }
   .player iframe, .player > div { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
   /* 再生前・再生後はプレイヤーを見せない(サムネイルやおすすめ動画のネタバレ防止) */
@@ -285,9 +291,9 @@
       `<button class="chip" data-f="${f.id}" aria-pressed="${f.id === filter}">${f.label}</button>`).join('');
   }
 
-  function visible() {
+  function visible(f = filter) {
     return DATA.matches.filter((m) =>
-      (filter === 'all' || (filter === 'jp' ? m.jp.length > 0 : m.group === filter)) &&
+      (f === 'all' || (f === 'jp' ? m.jp.length > 0 : m.group === f)) &&
       (!unwatchedBox.checked || !watched.has(m.id)));
   }
 
@@ -309,18 +315,20 @@
     </button>`;
   }
 
-  function render() {
-    const items = visible();
-    const list = document.getElementById('list');
-    if (!items.length) { list.innerHTML = '<p class="empty">表示できる試合はありません</p>'; return; }
+  function listHtml(f) {
+    const items = visible(f);
+    if (!items.length) return '<p class="empty">表示できる試合はありません</p>';
     const groups = new Map();
     for (const m of items) {
       const s = sectionOf(m.publishedAt);
       if (!groups.has(s)) groups.set(s, []);
       groups.get(s).push(m);
     }
-    list.innerHTML = [...groups].map(([s, ms]) =>
+    return [...groups].map(([s, ms]) =>
       `<h2>${s}(${ms.length})</h2><div class="grid">${ms.map(card).join('')}</div>`).join('');
+  }
+  function render() {
+    document.getElementById('list').innerHTML = listHtml(filter);
   }
 
   // ---- 再生シート ----
@@ -333,10 +341,10 @@
     const [h1] = m.home.colors || ['#334155'];
     const [a1] = m.away.colors || ['#0f172a'];
     sheet.innerHTML = `
-      <div class="sheet-head"><span class="src">${esc(m.comp)} ${esc(m.round)}</span>
-        <div class="head-btns"><button class="icon-btn watch-btn" data-act="watch" id="watchBtn"></button>
-        <button class="icon-btn" data-act="close">閉じる</button></div></div>
-      <div class="player-wrap">
+      <div class="sheet-top">
+        <div class="sheet-head"><span class="src">${esc(m.comp)} ${esc(m.round)}</span>
+          <div class="head-btns"><button class="icon-btn watch-btn" data-act="watch" id="watchBtn"></button>
+          <button class="icon-btn" data-act="close">閉じる</button></div></div>
         <div class="player" id="player" style="--home:${h1};--away:${a1}">
           <div class="yt-box" id="ytBox"><div id="yt"></div></div>
           <button class="play-btn" data-act="play" id="playBtn"><span>▶ 再生する</span></button>
@@ -367,20 +375,16 @@
     preparePlayer(m.id);
   }
 
-  // 見た/未視聴のボタン(目のマークだけで示す。押すたびに切り替わる)
-  const EYE = '<path fill-rule="evenodd" d="M12 5C7 5 3.2 8.4 1.5 12c1.7 3.6 5.5 7 10.5 7s8.8-3.4 10.5-7C20.8 8.4 17 5 12 5zm0 3.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6z"/><circle cx="12" cy="12" r="1.9"/>';
-  const EYE_ON = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">${EYE}</svg>`;
-  const EYE_OFF = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-    <mask id="eyeCut"><rect width="24" height="24" fill="#fff"/><path d="M3.5 3.5l17 17" stroke="#000" stroke-width="5" stroke-linecap="round"/></mask>
-    <g mask="url(#eyeCut)">${EYE}</g><path d="M3.5 3.5l17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+  // 見た/未視聴のボタン(今の状態を「未視聴」「視聴済」で示す。押すたびに切り替わる)
+  const CHECK = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function updateWatchBtn() {
     const btn = document.getElementById('watchBtn');
     if (!btn) return;
     const w = watched.has(sheet.dataset.id);
-    btn.innerHTML = w ? EYE_ON : EYE_OFF;
+    btn.innerHTML = w ? `${CHECK}視聴済` : '<span class="new-dot"></span>未視聴';
     btn.classList.toggle('on', w);
     btn.setAttribute('aria-pressed', String(w));
-    btn.setAttribute('aria-label', w ? '見た(押すと未視聴に戻す)' : '未視聴(押すと見たことにする)');
+    btn.setAttribute('aria-label', w ? '視聴済(押すと未視聴に戻す)' : '未視聴(押すと視聴済にする)');
   }
   function toggleWatched() {
     const id = sheet.dataset.id;
@@ -676,11 +680,31 @@
   let drag = null;
   let suppressClick = false; // スワイプの直後に試合が開いてしまわないように
   const neighbor = (dir) => { const fs = orderedFilters(); return fs[fs.findIndex((f) => f.id === filter) + dir]; };
-  const setList = (x, opacity, transition) => {
-    listEl.style.transition = transition || 'none';
+  // 左右の隣の一覧(スワイプを始めたときに中身を作り、見出しの真下に並べる)
+  const sides = { [-1]: document.createElement('div'), [1]: document.createElement('div') };
+  for (const el of Object.values(sides)) { el.className = 'page-side'; el.setAttribute('aria-hidden', 'true'); el.innerHTML = '<div></div>'; document.body.appendChild(el); }
+  // x: 今の一覧のずれ。隣の一覧は、画面幅ぶん離れた位置から一緒に動く
+  const placePages = (x, transition) => {
+    const t = transition || 'none';
+    listEl.style.transition = t;
     listEl.style.transform = x ? `translateX(${x}px)` : '';
-    listEl.style.opacity = opacity == null ? '' : String(opacity);
+    for (const d of [-1, 1]) {
+      sides[d].style.transition = t;
+      sides[d].style.transform = `translateX(${x + d * innerWidth}px)`;
+    }
   };
+  const showSides = () => {
+    const top = document.querySelector('header').getBoundingClientRect().bottom;
+    for (const d of [-1, 1]) {
+      const n = neighbor(d);
+      sides[d].classList.toggle('on', !!n);
+      if (!n) continue;
+      sides[d].style.top = top + 'px';
+      sides[d].firstChild.innerHTML = listHtml(n.id);
+    }
+  };
+  const hideSides = () => { for (const d of [-1, 1]) sides[d].classList.remove('on'); };
+  const PAGE_MOVE = '.32s cubic-bezier(.2, 0, 0, 1)';
   listEl.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     drag = { x: e.clientX, y: e.clientY, dx: 0, moving: false, pid: e.pointerId, t: 0 };
@@ -697,13 +721,14 @@
       if (Math.abs(rawX) < SWIPE_START) return;
       drag.moving = true;
       drag.t = performance.now();
+      showSides();
       try { listEl.setPointerCapture(e.pointerId); } catch {}
     }
     // 動き出しで跳ねないよう、反応し始めた位置を0として動かす。端(隣がない側)では重く、少しだけ動く
     let dx = Math.sign(rawX) * Math.max(0, Math.abs(rawX) - SWIPE_START);
     if (!neighbor(dx < 0 ? 1 : -1)) dx *= 0.25;
     drag.dx = dx;
-    setList(dx, 1 - Math.min(0.4, Math.abs(dx) / innerWidth));
+    placePages(dx);
   });
   const endDrag = (e) => {
     if (!drag || e.pointerId !== drag.pid) return;
@@ -717,17 +742,17 @@
     // 画面幅の4分の1以上動かすか、素早く払ったら切り替え(途中で中断されたときは元に戻すだけ)
     const fast = Math.abs(dx) > 30 && Math.abs(dx) / (performance.now() - t) > 0.5;
     if (e.type !== 'pointerup' || !target || (Math.abs(dx) < innerWidth / 4 && !fast)) {
-      setList(0, null, 'transform .45s cubic-bezier(.4, 0, .2, 1), opacity .45s');
+      placePages(0, `transform ${PAGE_MOVE}`);
+      setTimeout(hideSides, 330);
       return;
     }
-    // 今の一覧を払った方向へ送り出し、次の一覧を反対側からスッと入れる
-    setList(-dir * innerWidth, 0, 'transform .2s cubic-bezier(.4, 0, 1, 1), opacity .2s');
+    // 隣の一覧がそのまま画面に入りきったら、本物の一覧に差し替える(見た目は変わらない)
+    placePages(-dir * innerWidth, `transform ${PAGE_MOVE}`);
     setTimeout(() => {
       setFilter(target.id);
-      setList(dir * innerWidth * 0.4, 0);
-      void listEl.offsetWidth;
-      setList(0, null, 'transform .35s cubic-bezier(0, 0, .2, 1), opacity .35s');
-    }, 200);
+      placePages(0);
+      hideSides();
+    }, 330);
   };
   listEl.addEventListener('pointerup', endDrag);
   listEl.addEventListener('pointercancel', endDrag);
