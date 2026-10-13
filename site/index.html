@@ -72,8 +72,8 @@
   .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
   /* 下に引っぱって更新 */
   .ptr { height: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; color: var(--muted); }
-  .ptr.back { transition: height .25s cubic-bezier(.4, 0, .2, 1); }
-  .ptr svg { flex: none; transition: transform .2s; }
+  .ptr.back { transition: height .55s cubic-bezier(.4, 0, .2, 1); }
+  .ptr svg { flex: none; transition: transform .3s; }
   .ptr.ready svg { transform: rotate(180deg); }
   .ptr.loading svg { animation: ptr-spin .8s linear infinite; }
   @keyframes ptr-spin { to { transform: rotate(360deg); } }
@@ -687,7 +687,7 @@
   // ---- 一覧の一番上で下に引っぱると、最新の内容を読み直す ----
   const ptr = document.getElementById('ptr');
   const ptrText = document.getElementById('ptrText');
-  const PULL_READY = 64; // これ以上引っぱって離すと更新
+  const PULL_READY = 96; // これ以上引っぱって離すと更新(指を約220px、iPhone SEの画面の3分の1ほど動かす)
   let pull = null;
   const reloadPage = () => {
     ptr.classList.remove('ready');
@@ -695,7 +695,7 @@
     ptr.style.height = '44px';
     ptrText.textContent = '更新中…';
     // 見た記録・絞り込みは端末に保存してあるので、読み直しても消えない
-    setTimeout(() => location.reload(), 150);
+    setTimeout(() => location.reload(), 600); // 「更新中…」が一瞬で消えないよう少し待つ
   };
   document.addEventListener('touchstart', (e) => {
     if (wrap.classList.contains('open') || window.scrollY > 0 || e.touches.length > 1 || ptr.classList.contains('loading')) return;
@@ -711,7 +711,7 @@
       pull.on = true;
       ptr.classList.remove('back');
     }
-    pull.h = Math.max(0, Math.min(96, (dy - 10) * 0.5)); // 指の半分の速さで、ゆっくり伸びる
+    pull.h = Math.max(0, Math.min(120, (dy - 10) * 0.45)); // 指の半分弱の速さで、ゆっくり伸びる
     ptr.style.height = pull.h + 'px';
     const ready = pull.h >= PULL_READY;
     ptr.classList.toggle('ready', ready);
