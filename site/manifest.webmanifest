@@ -1,6 +1,6 @@
 {
-  "name": ".Highlight",
-  "short_name": ".Highlight",
+  "name": ".Digest",
+  "short_name": ".Digest",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -6,16 +6,16 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content=".Highlight">
+<meta name="apple-mobile-web-app-title" content=".Digest">
 <meta name="theme-color" content="#0f1720">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
-<!-- 見出し「.Highlight」用の書体(Montserrat。使う文字だけ読み込む) -->
+<!-- 見出し「.Digest」用の書体(Montserrat。使う文字だけ読み込む) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&text=.Highlight&display=swap">
-<title>.Highlight</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&text=.Digest&display=swap">
+<title>.Digest</title>
 <style>
   :root {
     --bg: #edf0f4; --surface: #ffffff; --text: #111827; --muted: #6b7280; --line: #e0e4ea;
@@ -159,10 +159,8 @@
   /* 全画面専用のプレイヤーは画面の外に置いておく(再生すると全画面に切り替わる) */
   .yt-full { position: fixed; left: -10000px; top: 0; width: 320px; height: 180px; }
   .full-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--accent-ink); font-weight: 700; padding: 8px 14px; }
-  h1 .dot { color: var(--accent); }
-  /* 見出しの「H」はアイコンと同じ形(2本の縦棒+間に▶)。高さは書体の大文字と同じ0.7em */
-  h1 .h-mark { height: .7em; width: auto; fill: currentColor; vertical-align: baseline; margin: 0 .06em 0 .02em; }
-  h1 .h-mark .tri { fill: var(--accent); }
+  /* 見出しの「D」はアイコンと同じ形(強調色のDに▶のくりぬき)。ほかの文字(大文字の高さ0.7em)より少し大きくして強弱をつける */
+  h1 .d-mark { height: .88em; width: auto; fill: var(--accent); vertical-align: baseline; margin: 0 .04em 0 .09em; }
   .play-btn {
     position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; border: 0; cursor: pointer;
     background: linear-gradient(135deg, var(--home, #334155), var(--away, #0f172a)); color: #fff; font-size: 17px; font-weight: 700;
@@ -199,7 +197,7 @@
 <body>
 <header>
   <div class="title-row">
-    <h1 aria-label=".Highlight"><span class="dot">.</span><svg class="h-mark" viewBox="196 136 218 240" aria-hidden="true"><rect x="196" y="136" width="62" height="240"/><rect x="352" y="136" width="62" height="240"/><path class="tri" d="M258 196 L258 316 L352 256 Z"/></svg>ighlight</h1>
+    <h1 aria-label=".Digest">.<svg class="d-mark" viewBox="196 136 210 240" aria-hidden="true"><path fill-rule="evenodd" d="M196 136H286A120 120 0 0 1 286 376H196ZM250 180L250 332L370 256Z"/></svg>igest</h1>
     <div class="title-actions">
       <button class="bell" data-act="notify" aria-label="通知の設定">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -616,7 +614,7 @@
         <ol class="steps">
           <li>Safariの下にある<b>共有ボタン</b>(□に↑のマーク)を押す</li>
           <li><b>「ホーム画面に追加」</b>を選び、「追加」を押す</li>
-          <li>ホーム画面の<b>「.Highlight」</b>アイコンから開き、もう一度右上の<b>ベルのボタン</b>を押す</li>
+          <li>ホーム画面の<b>「.Digest」</b>アイコンから開き、もう一度右上の<b>ベルのボタン</b>を押す</li>
         </ol>`;
     } else if (!pushSupported) {
       body += '<p class="note">この画面では通知が使えません。</p>';
@@ -650,7 +648,7 @@
     // iPhoneでは、ボタンを押した直後に許可を求める必要がある
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') {
-      openNotifySheet('通知が許可されませんでした。iPhoneの「設定」→「通知」→「.Highlight」から許可できます。');
+      openNotifySheet('通知が許可されませんでした。iPhoneの「設定」→「通知」→「.Digest」から許可できます。');
       return;
     }
     try {
