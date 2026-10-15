@@ -13,7 +13,7 @@ const NAVY = hex('#11242d'), WHITE = hex('#f8fafc'), TEAL = hex('#14b8a6');
 //   紺の背景に大きな白い丸(=「.Digest」の「.」)。丸にはごく薄く緑でサッカーボールの柄
 //   丸の中に「.Digest」: 「.」と「igest」は紺、「D」は緑(中を▶の形にくりぬき)。Dは見出しと同じくほかの文字より大きい
 const CIRCLE = { x: 256, y: 256, r: 212 };
-const TEXT_SCALE = 1.1; // 「.Digest」の文字は、下の形(丸の大きさ190のときの形)を丸の中心から1.1倍に広げて使う
+const TEXT_SCALE = 1.2; // 「.Digest」の文字は、下の形(丸の大きさ190のときの形)を丸の中心から1.2倍に広げて使う
 const BALL_OPACITY = 0.09;
 
 // 「igest」の文字の形(見出しと同じ Montserrat Black。書体ファイルから取り出した輪郭。1000単位・上向きが正)
