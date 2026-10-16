@@ -158,7 +158,8 @@
   .ts { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; cursor: pointer; }
   /* 全画面専用のプレイヤーは画面の外に置いておく(再生すると全画面に切り替わる) */
   .yt-full { position: fixed; left: -10000px; top: 0; width: 320px; height: 180px; }
-  .full-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--accent-ink); font-weight: 700; padding: 8px 14px; }
+  .full-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--accent-ink); font-weight: 700; padding: 8px 14px; transition: opacity .2s; }
+  .full-btn.preparing { opacity: .5; }
   /* 見出しはアイコンと同じ比率: 「.」と「D」が大きく、igest は小さく(アイコンと同じ 62/120)。Dはアイコンと同じ形(強調色のDに▶のくりぬき) */
   h1 .d-mark { height: .88em; width: auto; fill: var(--accent); vertical-align: baseline; margin: 0 .03em 0 .09em; }
   h1 .sub { font-size: .517em; }
@@ -355,9 +356,9 @@
       ${jpLabels(m)}
       <div class="sheet-actions">
         <span class="src" style="margin-right:auto;align-self:center">提供: ${esc(m.src)}(YouTube)</span>
-        <button class="icon-btn full-btn" data-act="full">
+        <button class="icon-btn full-btn preparing" data-act="full" id="fullBtn">
           <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          全画面で再生
+          <span id="fullLabel">全画面 準備中…</span>
         </button>
       </div>
       <div class="comments">
@@ -394,6 +395,7 @@
 
   function closeSheet() {
     clearTimeout(fallbackTimer);
+    clearTimeout(guardTimer);
     pending = null;
     playerReady = false;
     fullReady = false;
@@ -430,6 +432,11 @@
   const isIPhone = /iPhone|iPod/.test(navigator.userAgent);
   let pending = null; // 準備が終わる前に押されたときの再生予約 { at }
   let fallbackTimer = null;
+  // 画面内のプレイヤーを出したのに再生が始まらないとき(iPhoneに止められたとき)は、もう一度カバーで隠す。
+  // YouTube公式のサムネイル(結果が分かる画像のことがある)を出したままにしないため
+  let guardTimer = null;
+  let playStarted = false;
+  const GUARD_MS = 1500;
   const noCaptions = (p) => { try { p.unloadModule('captions'); p.unloadModule('cc'); } catch {} };
 
   // 再生前・再生後は、プレイヤーを見えなくして自前の再生ボタンを出す(サムネイルやおすすめ動画を見せない)
@@ -464,7 +471,7 @@
         onApiChange: (e) => noCaptions(e.target),
         onStateChange: (e) => {
           const S = YT.PlayerState;
-          if (e.data === S.PLAYING || e.data === S.BUFFERING) clearTimeout(fallbackTimer);
+          if (e.data === S.PLAYING || e.data === S.BUFFERING) { clearTimeout(fallbackTimer); playStarted = true; }
           if (e.data === S.PLAYING) { watched.add(id); saveWatched(); updateWatchBtn(); }
           // 終わったらすぐプレイヤーを隠す(おすすめ動画に他の試合の結果が出るのを防ぐ)。
           // 画面は開いたままにして、続けてコメントを読めるようにする
@@ -477,7 +484,7 @@
       videoId: id,
       playerVars: { playsinline: 0, rel: 0, cc_load_policy: 0 },
       events: {
-        onReady: (e) => { fullReady = true; noCaptions(e.target); },
+        onReady: (e) => { fullReady = true; noCaptions(e.target); markFullReady(); },
         onApiChange: (e) => noCaptions(e.target),
         onStateChange: (e) => {
           const S = YT.PlayerState;
@@ -489,9 +496,17 @@
     });
   }
 
-  // 全画面で再生(画面内のプレイヤーで途中まで見ていたら、その続きから)
+  // 全画面用のプレイヤーの準備ができたら、ボタンを押せる見た目に戻す
+  function markFullReady() {
+    document.getElementById('fullBtn')?.classList.remove('preparing');
+    const label = document.getElementById('fullLabel');
+    if (label) label.textContent = '全画面で再生';
+  }
+
+  // 全画面で再生(画面内のプレイヤーで途中まで見ていたら、その続きから)。
+  // 準備ができる前に押されても、画面内のプレイヤーには切り替えない(公式サムネイルが見えてしまうため)。ボタンは「準備中…」のまま
   function startFullscreen() {
-    if (!fullPlayer || !fullReady) { startPlayback(); return; } // 準備が間に合わないときは普通に再生
+    if (!fullPlayer || !fullReady) return;
     let from = 0;
     if (player && playerReady && !coverShown()) {
       from = player.getCurrentTime() || 0;
@@ -524,6 +539,11 @@
     player.unMute();
     player.playVideo();
     clearTimeout(fallbackTimer);
+    clearTimeout(guardTimer);
+    playStarted = false;
+    guardTimer = setTimeout(() => {
+      if (player && !playStarted) { try { player.pauseVideo(); } catch {} showCover('▶ 再生する'); }
+    }, GUARD_MS);
     // iPhoneが音ありの再生を止めたときは、音なしで始める(音はプレイヤーのミュート解除で)
     fallbackTimer = setTimeout(() => {
       const s = player?.getPlayerState?.();
