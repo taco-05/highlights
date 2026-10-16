@@ -159,8 +159,9 @@
   /* 全画面専用のプレイヤーは画面の外に置いておく(再生すると全画面に切り替わる) */
   .yt-full { position: fixed; left: -10000px; top: 0; width: 320px; height: 180px; }
   .full-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--accent-ink); font-weight: 700; padding: 8px 14px; }
-  /* 見出しの「D」はアイコンと同じ形(強調色のDに▶のくりぬき)。ほかの文字(大文字の高さ0.7em)より少し大きくして強弱をつける */
-  h1 .d-mark { height: .88em; width: auto; fill: var(--accent); vertical-align: baseline; margin: 0 .04em 0 .09em; }
+  /* 見出しはアイコンと同じ比率: 「.」と「D」が大きく、igest は小さく(アイコンと同じ 62/120)。Dはアイコンと同じ形(強調色のDに▶のくりぬき) */
+  h1 .d-mark { height: .88em; width: auto; fill: var(--accent); vertical-align: baseline; margin: 0 .03em 0 .09em; }
+  h1 .sub { font-size: .517em; }
   .play-btn {
     position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; border: 0; cursor: pointer;
     background: linear-gradient(135deg, var(--home, #334155), var(--away, #0f172a)); color: #fff; font-size: 17px; font-weight: 700;
@@ -197,7 +198,7 @@
 <body>
 <header>
   <div class="title-row">
-    <h1 aria-label=".Digest">.<svg class="d-mark" viewBox="196 136 210 240" aria-hidden="true"><path fill-rule="evenodd" d="M196 136H286A120 120 0 0 1 286 376H196ZM250 180L250 332L370 256Z"/></svg>igest</h1>
+    <h1 aria-label=".Digest">.<svg class="d-mark" viewBox="196 136 210 240" aria-hidden="true"><path fill-rule="evenodd" d="M196 136H286A120 120 0 0 1 286 376H196ZM250 180L250 332L370 256Z"/></svg><span class="sub">igest</span></h1>
     <div class="title-actions">
       <button class="bell" data-act="notify" aria-label="通知の設定">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -543,7 +544,8 @@
   // ---- コメント(自動更新のたびに集めたものを、ボタンを押したときだけ読み込む) ----
   const PAGE = 20;
   let comments = null; // { id, data, order, shown }
-  const commentsLabel = (m) => `コメントを表示${m.commentCount ? `(${m.commentCount.toLocaleString()}件)` : ''}`;
+  // コメントの件数は、コメント欄を開くまで出さない(件数の伸びで、日本人選手の活躍などが推測できてしまうため)
+  const commentsLabel = () => 'コメントを表示';
   const ago = (iso) => {
     const min = Math.max(0, (Date.now() - new Date(iso).getTime()) / 60000);
     if (min < 60) return `${Math.floor(min)}分前`;
@@ -588,10 +590,11 @@
     if (!d) { panel.innerHTML = '<p class="note muted">コメントを読み込めませんでした。公開されたばかりの動画は、次の自動更新(最大30分)のあとに見られます。</p>'; return; }
     if (d.disabled) { panel.innerHTML = '<p class="note muted">この動画はコメントがオフになっています。</p>'; return; }
     const list = d[comments.order] || [];
+    const count = DATA.matches.find((x) => x.id === comments.id)?.commentCount;
     const seg = (key, label) => `<button data-act="corder" data-o="${key}" aria-pressed="${comments.order === key}">${label}</button>`;
     panel.innerHTML = `
       <div class="cm-bar"><div class="seg">${seg('top', '人気順')}${seg('new', '新しい順')}</div>
-        <span class="cm-meta">YouTubeのコメント ・ ${hhmm(d.fetchedAt)}時点</span></div>
+        <span class="cm-meta">YouTubeのコメント${count ? ` ${count.toLocaleString()}件` : ''} ・ ${hhmm(d.fetchedAt)}時点</span></div>
       ${list.length ? '' : '<p class="note muted">まだコメントはありません。</p>'}
       ${list.slice(0, comments.shown).map((c) => `
         <div class="cm"><div class="cm-head"><span class="cm-author">${esc(c.a)}</span><span>${ago(c.p)}</span>
