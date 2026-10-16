@@ -44,11 +44,13 @@ jobs:
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: node scripts/fetch-comments.mjs
-      - name: AI点検用のリストを保存
+      - name: AI点検用のリストを保存(取得した動画一覧も、手元での確認用に一緒に残す)
         uses: actions/upload-artifact@v7
         with:
           name: review
-          path: review.json
+          path: |
+            review.json
+            data/videos.json
           retention-days: 7
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
