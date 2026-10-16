@@ -160,9 +160,9 @@
   .yt-full { position: fixed; left: -10000px; top: 0; width: 320px; height: 180px; }
   .full-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: var(--accent-ink); font-weight: 700; padding: 8px 14px; transition: opacity .2s; }
   .full-btn.preparing { opacity: .5; }
-  /* 見出しはアイコンと同じ比率: 「.」と「D」が大きく、igest は小さく(アイコンと同じ 62/120)。Dはアイコンと同じ形(強調色のDに▶のくりぬき) */
+  /* 見出しはアイコンに近い比率: 「.」と「D」が大きく、igest は小さく(アイコンは 62/120 だが、見出しでは小さすぎたので少し大きめの0.6em)。Dはアイコンと同じ形(強調色のDに▶のくりぬき) */
   h1 .d-mark { height: .88em; width: auto; fill: var(--accent); vertical-align: baseline; margin: 0 .03em 0 .09em; }
-  h1 .sub { font-size: .517em; }
+  h1 .sub { font-size: .6em; }
   .play-btn {
     position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; border: 0; cursor: pointer;
     background: linear-gradient(135deg, var(--home, #334155), var(--away, #0f172a)); color: #fff; font-size: 17px; font-weight: 700;
