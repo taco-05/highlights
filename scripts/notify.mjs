@@ -88,7 +88,9 @@ if (!state.notified) {
   console.log(`初回のため記録だけしました(${ids.length}試合)`);
 } else {
   // 対象外のチームの新着は、通知せずに「お知らせ済み」として記録だけする
-  const fresh = data.matches.filter((m) => !state.notified.includes(m.id) && wanted(m));
+  // 公開から2日より前の動画は送らない(対象の大会やチームを増やしたときに、古い試合がまとめて届かないように)
+  const recent = (m) => now - Date.parse(m.publishedAt) < 2 * 86400000;
+  const fresh = data.matches.filter((m) => !state.notified.includes(m.id) && wanted(m) && recent(m));
   console.log(`お知らせ時刻 ${new Date(slot + JST).toISOString().slice(5, 16).replace('T', ' ')}: 通知対象の新着 ${fresh.length}試合`);
   if (fresh.length) await sendAll(message(fresh));
 }

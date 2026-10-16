@@ -16,6 +16,7 @@ const since = now - SHOW_DAYS * 86400000;
 
 const teamsCfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/teams.json'), 'utf8'));
 const jpCfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/japanese-players.json'), 'utf8'));
+const natCfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/national-teams.json'), 'utf8'));
 
 // 表記ゆれ吸収: 全角半角・中黒・イコール・空白などを取り除いて比べる
 const norm = (s) => s.normalize('NFKC').replace(/[\s・･=.'’‐\-]/g, '').toLowerCase();
@@ -24,9 +25,25 @@ const aliasMap = new Map();
 for (const t of teamsCfg.teams) for (const a of t.aliases) aliasMap.set(norm(a), t);
 const aliasesLongestFirst = [...aliasMap.entries()].sort((a, b) => b[0].length - a[0].length);
 
-// 上から順に判定する(女子・親善試合などは除外)
+// 上から順に判定する(女子・クラブの親善試合などは除外)
 const COMPS = [
-  { re: /女子|WSL/, skip: true },
+  { re: /女子|WSL|なでしこ/, skip: true },
+  { re: /クラブワールドカップ/, skip: true },
+  // 代表戦(national)。「代表」タブにまとめる。対象国は config/national-teams.json
+  { re: /ワールドカップ.{0,12}予選|W杯.{0,6}予選|アジア最終予選|アジア2次予選|欧州予選|南米予選/, id: 'wcq', label: 'W杯予選', short: 'W杯予選', national: true },
+  { re: /ワールドカップ|W杯/, id: 'wc', label: 'ワールドカップ', short: 'W杯', national: true },
+  { re: /ネーションズリーグ/, id: 'nations', label: 'ネーションズリーグ', short: 'ネーションズL', national: true },
+  { re: /(EURO|ユーロ|欧州選手権).{0,12}予選/, id: 'euroq', label: 'EURO予選', short: 'EURO予選', national: true },
+  { re: /EURO\s*20\d\d|ユーロ\s*20\d\d|欧州選手権/, id: 'euro', label: 'EURO', short: 'EURO', national: true },
+  { re: /コパ・?アメリカ/, id: 'copa', label: 'コパ・アメリカ', short: 'コパ', national: true },
+  { re: /アフリカ・?ネーションズカップ/, id: 'afcon', label: 'アフリカ・ネーションズカップ', short: 'アフリカ杯', national: true },
+  { re: /ゴールドカップ/, id: 'goldcup', label: 'ゴールドカップ', short: 'ゴールドC', national: true },
+  { re: /アジアカップ/, id: 'asiancup', label: 'アジアカップ', short: 'アジアカップ', national: true },
+  { re: /E-1|EAFF/, id: 'e1', label: 'E-1選手権', short: 'E-1', national: true },
+  { re: /オリンピック|五輪/, id: 'olympic', label: 'オリンピック', short: '五輪', national: true },
+  { re: /キリンチャレンジカップ/, id: 'kirinchallenge', label: 'キリンチャレンジカップ', short: '親善試合', national: true },
+  { re: /キリンカップ/, id: 'kirincup', label: 'キリンカップ', short: 'キリンカップ', national: true },
+  { re: /国際親善試合|国際試合/, id: 'friendly', label: '国際親善試合', short: '親善試合', national: true },
   { re: /プレシーズン|親善|フレンドリー/, skip: true },
   { re: /ブンデスリーガ\s*2部/, skip: true },
   // Jリーグのチームが出る大会(J1のチームの試合だけ)。ACLは「チャンピオンズリーグ」を含むので欧州CLより先に判定する
@@ -58,8 +75,13 @@ const COMPS = [
   { re: /コミュニティ・シールド/, id: 'shield', label: 'コミュニティ・シールド', short: 'シールド', group: 'premier' },
   { re: /J1リーグ/, id: 'j1', label: 'J1リーグ', short: 'J1', group: 'j1' },
 ];
-// J1とJ1チームのカップ戦・ACLは日本人選手ばかりなので、🇯🇵マークは付けない
-const noJpMark = (comp) => comp.id === 'j1' || !!comp.j1Only;
+for (const c of COMPS) if (c.national) c.group = 'national';
+// J1とJ1チームのカップ戦・ACL、代表戦は日本人選手ばかり(または日本人が出ない)なので、JPNマークは付けない
+const noJpMark = (comp) => comp.id === 'j1' || !!comp.j1Only || !!comp.national;
+// 代表戦は「2026」のような年の表記(クラブの「2026-27」とは違う)。2026年以降の大会だけ
+const NATIONAL_YEAR_RE = /20(2[6-9]|[3-9]\d)/;
+// 世代別の代表(日本だけ対象): U-23・U-20・五輪など
+const YOUTH_RE = /U-?\s?(\d{2})|五輪|オリンピック/;
 const SEASON_RE = /2026[-/]27|26[-/]27/;
 const NOT_HIGHLIGHT_RE = /ゴール集|プレー集|トピック|ふりかえり|振り返り|特集|切り抜き|インタビュー|速報|ピッチレベル|全ゴール|プロファイル/;
 const PAIR_RE = /^\s*(.+?)\s*(?:×|✕|\s+v\s+|\s+vs\.?\s+)\s*(.+?)\s*$/i;
@@ -70,6 +92,13 @@ const NOT_NAME_RE = /出場|先発|途中|記録|選手|点目|得点|ゴール|
 // ---- タイトルの分解 ----
 function detectComp(text) {
   for (const c of COMPS) if (c.re.test(text)) return c;
+  return null;
+}
+// 大会名は、タイトルの後ろの方の区切り(｜・／)に入っていることが多い。後ろから順に探し、
+// 一言コメント(「W杯後初ゴール」「代表帰りの…」など)に大会らしい言葉があっても、大会名の方を優先する
+function detectCompFromEnd(text) {
+  const segs = text.split(/[｜|／]/);
+  for (let i = segs.length - 1; i >= 0; i--) { const c = detectComp(segs[i]); if (c) return c; }
   return null;
 }
 
@@ -149,6 +178,18 @@ function resolveTeam(rawName) {
     ? { key: t.id, id: t.id, name: t.name, code: t.code, colors: t.colors, target: !!t.target }
     : { key: norm(rawName), id: null, name: rawName, code: '', colors: null, target: false };
 }
+// 代表チーム: 「代表」「U-23」などを取り除いて対象国の表と照らす。世代別は名前の前に年代を付ける(例: U-23日本)
+const natMap = new Map();
+for (const t of natCfg.teams) for (const a of t.aliases) natMap.set(norm(a), t);
+function resolveNational(rawName, age) {
+  const base = rawName.replace(/U-?\s?\d{2}|五輪|オリンピック|代表/g, '').trim();
+  const t = natMap.get(norm(base));
+  const name = (t ? t.name : base) || rawName;
+  const shown = age ? `${age}${name}` : name;
+  return t
+    ? { key: t.id + (age ? '-' + age : ''), id: t.id, name: shown, code: t.code, colors: t.colors, target: true }
+    : { key: norm(shown), id: null, name: shown, code: '', colors: null, target: false };
+}
 function teamsInText(text) {
   const n = norm(text);
   const hits = new Set();
@@ -169,13 +210,17 @@ for (const v of videos.values()) {
   if (!(v.time >= since)) continue;
   if (v.playable === false) continue; // 埋め込み不可・日本で見られない動画は使わない
   const { compText, pair, blurb } = splitTitle(v.title);
-  const comp = detectComp(compText) || detectComp(v.title);
+  const comp = detectCompFromEnd(compText) || detectComp(compText) || detectComp(v.title);
   if (!comp || comp.skip) continue;
-  // 「2026-27」などのシーズン表記で古い動画を除く(国内カップ戦は表記が違うことがあるので見ない)
-  if (!comp.j1Only && !SEASON_RE.test(v.title)) continue;
+  // 「2026-27」などのシーズン表記で古い動画を除く(国内カップ戦は表記が違うことがあるので見ない。代表戦は年の表記)
+  if (comp.national ? !NATIONAL_YEAR_RE.test(v.title) : !comp.j1Only && !SEASON_RE.test(v.title)) continue;
   const round = detectRound(compText);
   const isHighlight = /ハイライト/.test(v.title) && !NOT_HIGHLIGHT_RE.test(v.title);
-  if (isHighlight && pair) {
+  if (isHighlight && pair && comp.national) {
+    const youth = v.title.match(YOUTH_RE);
+    const age = youth ? (youth[1] ? `U-${youth[1]}` : 'U-23') : '';
+    highlights.push({ v, comp, round, home: resolveNational(pair[0], age), away: resolveNational(pair[1], age), blurb, youth: !!youth });
+  } else if (isHighlight && pair) {
     highlights.push({ v, comp, round, home: resolveTeam(pair[0]), away: resolveTeam(pair[1]), blurb });
   } else if (isHighlight) {
     review.unparsed.push(v.title);
@@ -196,18 +241,21 @@ const j1LeagueKeys = new Set();
 for (const h of highlights) if (h.comp.id === 'j1') j1LeagueKeys.add(h.home.key).add(h.away.key);
 const isJ1Team = (t) => (t.id && leagueOf.get(t.id) === 'j1') || j1LeagueKeys.has(t.key);
 const included = (h) =>
-  h.comp.j1Only ? isJ1Team(h.home) || isJ1Team(h.away)
+  h.comp.national ? (h.youth ? h.home.id === 'jpn' || h.away.id === 'jpn' : h.home.target || h.away.target)
+    : h.comp.j1Only ? isJ1Team(h.home) || isJ1Team(h.away)
     : allTeamsComps.has(h.comp.id) || isTarget(h.home) || isTarget(h.away);
 
 // ---- 3. 対象試合だけ残し、同じ試合は「先に出た方」を採用 ----
 // 配信会社によって「第◯節」の数え方が違うことがある(延期分など)ので、節では比べない。
 // 「同じ大会・同じチーム・3日以内」なら同じ試合とみなす(リーグ戦で3日以内に同じチームが2試合することはない)
 const NEAR = 3 * 86400000;
-const knownIds = new Set(teamsCfg.teams.map((t) => t.id));
+const knownIds = new Set([...teamsCfg.teams, ...natCfg.teams].map((t) => t.id));
 const teamKeys = (h) => [h.home, h.away].map((t) => t.key);
 const sameMatch = (a, b) => {
   if (a.comp.id !== b.comp.id || Math.abs(a.v.time - b.v.time) >= NEAR) return false;
   const ka = teamKeys(a), kb = teamKeys(b);
+  // 代表戦は代表ウィーク中に3日おきで試合があるので、両チームとも一致したときだけ同じ試合
+  if (a.comp.national) return ka.every((k) => kb.includes(k));
   // 登録済みのチームが1つでも共通なら同じ試合。登録されていないチーム同士なら、名前が両方一致したときだけ
   return ka.some((k) => knownIds.has(k) && kb.includes(k)) || ka.every((k) => kb.includes(k));
 };

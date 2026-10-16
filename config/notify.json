@@ -1,6 +1,6 @@
 {
-  "_note": "通知の対象。teams(config/teams.json の id)の試合と、players(🇯🇵マークに出る名前)が出場した試合を通知する。両方とも空なら一覧に載る全試合を通知する。一覧の表示はこの設定に関係なく全試合。",
-  "teams": ["barcelona", "gamba"],
+  "_note": "通知の対象。teams(config/teams.json か config/national-teams.json の id。jpn=日本代表で、世代別も含む)の試合と、players(🇯🇵マークに出る名前)が出場した試合を通知する。両方とも空なら一覧に載る全試合を通知する。一覧の表示はこの設定に関係なく全試合。",
+  "teams": ["barcelona", "gamba", "jpn"],
   "players": [
     "久保建英",
     "佐野海舟",
