@@ -247,17 +247,22 @@ const included = (h) =>
 
 // ---- 3. 対象試合だけ残し、同じ試合は「先に出た方」を採用 ----
 // 配信会社によって「第◯節」の数え方が違うことがある(延期分など)ので、節では比べない。
-// 「同じ大会・同じチーム・3日以内」なら同じ試合とみなす(リーグ戦で3日以内に同じチームが2試合することはない)
+// J1などは中2〜3日で次の試合があるので、「同じチームが入っている」だけでは同じ試合と決めない
+// (2026-10: 水曜の第11節 福岡×G大阪 と、土曜の第12節 G大阪×京都 を同じ試合と誤判定して、後者が消えていた)
 const NEAR = 3 * 86400000;
+const CROSS_NEAR = 36 * 3600000;
 const knownIds = new Set([...teamsCfg.teams, ...natCfg.teams].map((t) => t.id));
 const teamKeys = (h) => [h.home, h.away].map((t) => t.key);
 const sameMatch = (a, b) => {
-  if (a.comp.id !== b.comp.id || Math.abs(a.v.time - b.v.time) >= NEAR) return false;
+  if (a.comp.id !== b.comp.id) return false;
+  const gap = Math.abs(a.v.time - b.v.time);
   const ka = teamKeys(a), kb = teamKeys(b);
-  // 代表戦は代表ウィーク中に3日おきで試合があるので、両チームとも一致したときだけ同じ試合
-  if (a.comp.national) return ka.every((k) => kb.includes(k));
-  // 登録済みのチームが1つでも共通なら同じ試合。登録されていないチーム同士なら、名前が両方一致したときだけ
-  return ka.some((k) => knownIds.has(k) && kb.includes(k)) || ka.every((k) => kb.includes(k));
+  const bothSame = ka.every((k) => kb.includes(k));
+  // 同じ配信会社どうし・代表戦: 両チームとも一致したときだけ同じ試合
+  if (a.v.src === b.v.src || a.comp.national) return bothSame && gap < NEAR;
+  // 別の配信会社どうし(ラ・リーガの DAZN と U-NEXT など): 対象外の相手チームの書き方が違うことがあるので、
+  // 登録済みのチームが1つ共通で36時間以内なら同じ試合(同じチームが36時間以内に2試合することはない)
+  return gap < CROSS_NEAR && (bothSame || ka.some((k) => knownIds.has(k) && kb.includes(k)));
 };
 const matches = [];
 for (const h of highlights) {
