@@ -159,6 +159,13 @@
     "teams": [
      "lyon"
     ]
+   },
+   {
+    "match": "SvDbAfSAutY",
+    "date": "2026-11-08",
+    "teams": [
+     "lyon"
+    ]
    }
   ],
   "佐野航大": [
@@ -182,6 +189,13 @@
     "teams": [
      "psv",
      "feyenoord"
+    ]
+   },
+   {
+    "match": "BnxcLCJUamY",
+    "date": "2026-11-08",
+    "teams": [
+     "psv"
     ]
    }
   ],
@@ -207,6 +221,13 @@
    {
     "match": "d1EnF1WRyIA",
     "date": "2026-11-01",
+    "teams": [
+     "sociedad"
+    ]
+   },
+   {
+    "match": "HZfGxu39vuE",
+    "date": "2026-11-08",
     "teams": [
      "sociedad"
     ]
@@ -296,6 +317,14 @@
     "teams": [
      "crystalpalace",
      "newcastle"
+    ]
+   },
+   {
+    "match": "17WgReA5KcY",
+    "date": "2026-11-08",
+    "teams": [
+     "crystalpalace",
+     "liverpool"
     ]
    }
   ],
@@ -389,6 +418,14 @@
      "hull",
      "ipswich"
     ]
+   },
+   {
+    "match": "0t-J-JT96lQ",
+    "date": "2026-11-08",
+    "teams": [
+     "ipswich",
+     "bournemouth"
+    ]
    }
   ],
   "田中碧": [
@@ -433,12 +470,26 @@
      "freiburg",
      "bayern"
     ]
+   },
+   {
+    "match": "CAngDSOE4QI",
+    "date": "2026-11-08",
+    "teams": [
+     "freiburg"
+    ]
    }
   ],
   "後藤啓介": [
    {
     "match": "lxxyvZe7Pt8",
     "date": "2026-10-31",
+    "teams": [
+     "freiburg"
+    ]
+   },
+   {
+    "match": "CAngDSOE4QI",
+    "date": "2026-11-08",
     "teams": [
      "freiburg"
     ]
@@ -540,6 +591,16 @@
     "teams": [
      "psv",
      "feyenoord"
+    ]
+   }
+  ],
+  "三笘薫": [
+   {
+    "match": "wbkpV9jvHjE",
+    "date": "2026-11-08",
+    "teams": [
+     "brighton",
+     "brentford"
     ]
    }
   ]
