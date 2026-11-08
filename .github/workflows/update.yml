@@ -44,6 +44,8 @@ jobs:
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: node scripts/fetch-comments.mjs
+      - name: タイトルで分からなかった日本人選手の出場をコメントから補う
+        run: node scripts/jp-from-comments.mjs
       - name: AI点検用のリストを保存(取得した動画一覧も、手元での確認用に一緒に残す)
         uses: actions/upload-artifact@v7
         with:
@@ -71,7 +73,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add state/
-            git commit -q -m "通知の記録を更新"
+            git commit -q -m "通知・所属クラブの記録を更新"
             git pull -q --rebase origin main
             git push -q origin HEAD:main
           fi

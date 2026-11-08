@@ -1,0 +1,547 @@
+{
+ "players": {
+  "堂安律": [
+   {
+    "match": "hQzLYKAkXKw",
+    "date": "2026-11-07",
+    "teams": [
+     "frankfurt"
+    ]
+   },
+   {
+    "match": "uQeDeblrDeE",
+    "date": "2026-11-01",
+    "teams": [
+     "frankfurt"
+    ]
+   },
+   {
+    "match": "J9ZSdZWrCIU",
+    "date": "2026-10-27",
+    "teams": [
+     "frankfurt"
+    ]
+   }
+  ],
+  "伊藤洋輝": [
+   {
+    "match": "52rDqvXTKlg",
+    "date": "2026-11-07",
+    "teams": [
+     "mainz"
+    ]
+   },
+   {
+    "match": "-TfC_URrK7A",
+    "date": "2026-10-29",
+    "teams": [
+     "bayern"
+    ]
+   }
+  ],
+  "佐野海舟": [
+   {
+    "match": "52rDqvXTKlg",
+    "date": "2026-11-07",
+    "teams": [
+     "mainz"
+    ]
+   },
+   {
+    "match": "ul-5uXWOTRI",
+    "date": "2026-10-30",
+    "teams": [
+     "mainz"
+    ]
+   },
+   {
+    "match": "c_dEcxvYEW0",
+    "date": "2026-10-27",
+    "teams": [
+     "mainz"
+    ]
+   }
+  ],
+  "坂元達裕": [
+   {
+    "match": "7D1FViPwDUg",
+    "date": "2026-11-07",
+    "teams": [
+     "everton",
+     "coventry"
+    ]
+   },
+   {
+    "match": "oZ6m4w5ilcM",
+    "date": "2026-10-31",
+    "teams": [
+     "coventry",
+     "sunderland"
+    ]
+   }
+  ],
+  "板倉滉": [
+   {
+    "match": "EWYVy9ti7Ac",
+    "date": "2026-11-06",
+    "teams": [
+     "gladbach"
+    ]
+   },
+   {
+    "match": "iT3pGldHMh8",
+    "date": "2026-10-31",
+    "teams": [
+     "gladbach"
+    ]
+   }
+  ],
+  "町野修斗": [
+   {
+    "match": "EWYVy9ti7Ac",
+    "date": "2026-11-06",
+    "teams": [
+     "gladbach"
+    ]
+   },
+   {
+    "match": "iT3pGldHMh8",
+    "date": "2026-10-31",
+    "teams": [
+     "gladbach"
+    ]
+   }
+  ],
+  "宇野禅斗": [
+   {
+    "match": "EWYVy9ti7Ac",
+    "date": "2026-11-06",
+    "teams": [
+     "gladbach"
+    ]
+   },
+   {
+    "match": "iT3pGldHMh8",
+    "date": "2026-10-31",
+    "teams": [
+     "gladbach"
+    ]
+   }
+  ],
+  "南野拓実": [
+   {
+    "match": "C7Unp8sRRd4",
+    "date": "2026-11-05",
+    "teams": [
+     "monaco"
+    ]
+   },
+   {
+    "match": "v_iuwE5hNE0",
+    "date": "2026-11-01",
+    "teams": [
+     "monaco"
+    ]
+   }
+  ],
+  "中村敬斗": [
+   {
+    "match": "g-AmFbeq_G0",
+    "date": "2026-11-05",
+    "teams": [
+     "sociedad",
+     "lyon"
+    ]
+   },
+   {
+    "match": "n7NHwyBRxP8",
+    "date": "2026-11-01",
+    "teams": [
+     "lyon"
+    ]
+   }
+  ],
+  "佐野航大": [
+   {
+    "match": "PSIHIuZbrVQ",
+    "date": "2026-11-04",
+    "teams": [
+     "psv"
+    ]
+   },
+   {
+    "match": "SazbtNFYwMg",
+    "date": "2026-10-31",
+    "teams": [
+     "psv"
+    ]
+   },
+   {
+    "match": "OmVaMytXBfo",
+    "date": "2026-10-25",
+    "teams": [
+     "psv",
+     "feyenoord"
+    ]
+   }
+  ],
+  "鈴木彩艶": [
+   {
+    "match": "Yw6mrjrysKA",
+    "date": "2026-11-03",
+    "teams": [
+     "barcelona",
+     "astonvilla"
+    ]
+   },
+   {
+    "match": "-kKKDsl44sw",
+    "date": "2026-10-31",
+    "teams": [
+     "astonvilla",
+     "fulham"
+    ]
+   }
+  ],
+  "久保建英": [
+   {
+    "match": "d1EnF1WRyIA",
+    "date": "2026-11-01",
+    "teams": [
+     "sociedad"
+    ]
+   }
+  ],
+  "小杉啓太": [
+   {
+    "match": "uQeDeblrDeE",
+    "date": "2026-11-01",
+    "teams": [
+     "frankfurt"
+    ]
+   },
+   {
+    "match": "J9ZSdZWrCIU",
+    "date": "2026-10-27",
+    "teams": [
+     "frankfurt"
+    ]
+   }
+  ],
+  "高井幸大": [
+   {
+    "match": "3XK5JH9vhA8",
+    "date": "2026-11-01",
+    "teams": [
+     "stvv"
+    ]
+   }
+  ],
+  "石渡ネルソン": [
+   {
+    "match": "3XK5JH9vhA8",
+    "date": "2026-11-01",
+    "teams": [
+     "stvv"
+    ]
+   }
+  ],
+  "坂本一彩": [
+   {
+    "match": "ePh0w9SBt9w",
+    "date": "2026-10-31",
+    "teams": [
+     "westerlo"
+    ]
+   }
+  ],
+  "木村誠二": [
+   {
+    "match": "ePh0w9SBt9w",
+    "date": "2026-10-31",
+    "teams": [
+     "westerlo"
+    ]
+   }
+  ],
+  "齋藤俊輔": [
+   {
+    "match": "ePh0w9SBt9w",
+    "date": "2026-10-31",
+    "teams": [
+     "westerlo"
+    ]
+   }
+  ],
+  "鎌田大地": [
+   {
+    "match": "zYRZ_NflOYk",
+    "date": "2026-10-31",
+    "teams": [
+     "tottenham",
+     "crystalpalace"
+    ]
+   },
+   {
+    "match": "o7itHSwoAwM",
+    "date": "2026-10-28",
+    "teams": [
+     "fulham",
+     "crystalpalace"
+    ]
+   },
+   {
+    "match": "DFSCzmLqiRU",
+    "date": "2026-10-25",
+    "teams": [
+     "crystalpalace",
+     "newcastle"
+    ]
+   }
+  ],
+  "橋岡大樹": [
+   {
+    "match": "iT3pGldHMh8",
+    "date": "2026-10-31",
+    "teams": [
+     "gladbach"
+    ]
+   }
+  ],
+  "伊東純也": [
+   {
+    "match": "m7ZKBnJZk20",
+    "date": "2026-10-31",
+    "teams": [
+     "genk"
+    ]
+   },
+   {
+    "match": "lFgAabUEav4",
+    "date": "2026-10-25",
+    "teams": [
+     "genk"
+    ]
+   }
+  ],
+  "横山歩夢": [
+   {
+    "match": "m7ZKBnJZk20",
+    "date": "2026-10-31",
+    "teams": [
+     "genk"
+    ]
+   },
+   {
+    "match": "lFgAabUEav4",
+    "date": "2026-10-25",
+    "teams": [
+     "genk"
+    ]
+   }
+  ],
+  "町田浩樹": [
+   {
+    "match": "sjgofqV6Tqs",
+    "date": "2026-10-31",
+    "teams": [
+     "hoffenheim"
+    ]
+   },
+   {
+    "match": "dWrAhMs85cA",
+    "date": "2026-10-29",
+    "teams": [
+     "hoffenheim"
+    ]
+   },
+   {
+    "match": "igSNAW9Y_Pg",
+    "date": "2026-10-25",
+    "teams": [
+     "hoffenheim"
+    ]
+   }
+  ],
+  "守田英正": [
+   {
+    "match": "aWwc3Liok9s",
+    "date": "2026-10-31",
+    "teams": [
+     "hull",
+     "ipswich"
+    ]
+   },
+   {
+    "match": "R_JSW8yvxP8",
+    "date": "2026-10-25",
+    "teams": [
+     "hull",
+     "brentford"
+    ]
+   }
+  ],
+  "前田大然": [
+   {
+    "match": "aWwc3Liok9s",
+    "date": "2026-10-31",
+    "teams": [
+     "hull",
+     "ipswich"
+    ]
+   }
+  ],
+  "田中碧": [
+   {
+    "match": "hgziFcqWWQI",
+    "date": "2026-10-31",
+    "teams": [
+     "bournemouth",
+     "leeds"
+    ]
+   },
+   {
+    "match": "LKfiSjlYOJQ",
+    "date": "2026-10-25",
+    "teams": [
+     "sunderland",
+     "leeds"
+    ]
+   }
+  ],
+  "田中聡": [
+   {
+    "match": "6CiQRzajWyQ",
+    "date": "2026-10-31",
+    "teams": [
+     "schalke"
+    ]
+   }
+  ],
+  "鈴木唯人": [
+   {
+    "match": "lxxyvZe7Pt8",
+    "date": "2026-10-31",
+    "teams": [
+     "freiburg"
+    ]
+   },
+   {
+    "match": "BGzIsrB3SI4",
+    "date": "2026-10-25",
+    "teams": [
+     "freiburg",
+     "bayern"
+    ]
+   }
+  ],
+  "後藤啓介": [
+   {
+    "match": "lxxyvZe7Pt8",
+    "date": "2026-10-31",
+    "teams": [
+     "freiburg"
+    ]
+   }
+  ],
+  "瀬古歩夢": [
+   {
+    "match": "NwrLiBLXJ8c",
+    "date": "2026-10-30",
+    "teams": [
+     "lehavre",
+     "psg"
+    ]
+   },
+   {
+    "match": "Rw0Z9v_3ApQ",
+    "date": "2026-10-25",
+    "teams": [
+     "lehavre"
+    ]
+   }
+  ],
+  "中村草太": [
+   {
+    "match": "NwrLiBLXJ8c",
+    "date": "2026-10-30",
+    "teams": [
+     "lehavre",
+     "psg"
+    ]
+   },
+   {
+    "match": "Rw0Z9v_3ApQ",
+    "date": "2026-10-25",
+    "teams": [
+     "lehavre"
+    ]
+   }
+  ],
+  "関根大輝": [
+   {
+    "match": "dWrAhMs85cA",
+    "date": "2026-10-29",
+    "teams": [
+     "hoffenheim"
+    ]
+   }
+  ],
+  "菅原由勢": [
+   {
+    "match": "V5weLv3Hp0s",
+    "date": "2026-10-27",
+    "teams": [
+     "cagliari"
+    ]
+   }
+  ],
+  "川﨑颯太": [
+   {
+    "match": "c_dEcxvYEW0",
+    "date": "2026-10-27",
+    "teams": [
+     "mainz"
+    ]
+   }
+  ],
+  "山本理仁": [
+   {
+    "match": "BGzIsrB3SI4",
+    "date": "2026-10-25",
+    "teams": [
+     "freiburg",
+     "bayern"
+    ]
+   }
+  ],
+  "水多海斗": [
+   {
+    "match": "Rw0Z9v_3ApQ",
+    "date": "2026-10-25",
+    "teams": [
+     "lehavre"
+    ]
+   }
+  ],
+  "谷口彰悟": [
+   {
+    "match": "8e8cLb7i5ZU",
+    "date": "2026-10-25",
+    "teams": [
+     "stvv"
+    ]
+   }
+  ],
+  "渡辺剛": [
+   {
+    "match": "OmVaMytXBfo",
+    "date": "2026-10-25",
+    "teams": [
+     "psv",
+     "feyenoord"
+    ]
+   }
+  ]
+ }
+}
