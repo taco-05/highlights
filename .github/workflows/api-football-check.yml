@@ -1,0 +1,21 @@
+# API-Football の無料枠で今季の出場メンバーが取れるかを確かめる(手動で動かす確認用)
+name: api-football-check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: 今季の試合の出場メンバーが取れるか確かめる
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: node scripts/check-api-football.mjs
