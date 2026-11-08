@@ -280,6 +280,13 @@
     "teams": [
      "stvv"
     ]
+   },
+   {
+    "match": "U7Q9NVqYRRE",
+    "date": "2026-11-08",
+    "teams": [
+     "stvv"
+    ]
    }
   ],
   "坂本一彩": [
@@ -364,6 +371,14 @@
     "match": "lFgAabUEav4",
     "date": "2026-10-25",
     "teams": [
+     "genk"
+    ]
+   },
+   {
+    "match": "ASCXAx9hJTQ",
+    "date": "2026-11-08",
+    "teams": [
+     "unionsg",
      "genk"
     ]
    }
@@ -623,6 +638,15 @@
     "teams": [
      "brighton",
      "brentford"
+    ]
+   }
+  ],
+  "松澤海斗": [
+   {
+    "match": "U7Q9NVqYRRE",
+    "date": "2026-11-08",
+    "teams": [
+     "stvv"
     ]
    }
   ]
