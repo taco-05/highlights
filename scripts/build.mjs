@@ -85,7 +85,7 @@ const YOUTH_RE = /U-?\s?(\d{2})|五輪|オリンピック/;
 const SEASON_RE = /2026[-/]27|26[-/]27/;
 const NOT_HIGHLIGHT_RE = /ゴール集|プレー集|トピック|ふりかえり|振り返り|特集|切り抜き|インタビュー|速報|ピッチレベル|全ゴール|プロファイル/;
 const PAIR_RE = /^\s*(.+?)\s*(?:×|✕|\s+v\s+|\s+vs\.?\s+)\s*(.+?)\s*$/i;
-const NEGATIVE_RE = /出番なし|ベンチ外|欠場|メンバー外|離脱|出場なし/;
+const NEGATIVE_RE = /出番なし|ベンチ外|欠場|メンバー外|離脱|出場なし|不在|負傷|怪我|ケガ/;
 // 名前ではない言葉(「先発出場」「2点目」など)を名前候補から外す
 const NOT_NAME_RE = /出場|先発|途中|記録|選手|点目|得点|ゴール|アシスト|活躍|初|今季|正真正銘|圧巻|劇的|待望/;
 
@@ -278,13 +278,17 @@ for (const h of highlights) {
 }
 
 // ---- 4. 選手特集・速報などの動画から「日本人出場」の情報だけ足す ----
+// 試合前の会見・プレビューなどは使わない(「〇〇不在」のように出場しない話のことがある)。
+// 試合中・試合後の動画だけ使うため、ハイライトの公開より6時間以上前の動画も使わない(2026-11-09: ブライトン×ブレントフォードの試合前会見で三笘に誤って印が付いた)
+const PRE_MATCH_RE = /試合前|会見|プレビュー|展望|直前|前日|予想/;
+const PRE_MATCH_MS = 6 * 3600000;
 for (const c of clips) {
-  if (noJpMark(c.comp)) continue;
+  if (noJpMark(c.comp) || PRE_MATCH_RE.test(c.v.title)) continue;
   const jp = findJapanese(c.v.title, c.v.title);
   if (!jp.length) continue;
   const teams = teamsInText(c.v.title);
   for (const m of matches) {
-    if (m.comp.id === c.comp.id && Math.abs(m.v.time - c.v.time) < NEAR && (teams.has(m.home.id) || teams.has(m.away.id))) {
+    if (m.comp.id === c.comp.id && c.v.time > m.v.time - PRE_MATCH_MS && c.v.time - m.v.time < NEAR && (teams.has(m.home.id) || teams.has(m.away.id))) {
       jp.forEach((n) => m.jp.add(n));
     }
   }
