@@ -11,7 +11,7 @@ const NAVY = hex('#11242d'), WHITE = hex('#f8fafc'), TEAL = hex('#14b8a6');
 
 // デザイン(512×512の座標で考える。2026-10-15 に taku が決定)
 //   紺の背景に大きな白い丸(=「.Digest」の「.」)。丸にはごく薄く緑でサッカーボールの柄
-//   丸の中に「.Digest」: 「.」と「igest」は紺、「D」は緑(中を▶の形にくりぬき)。Dは見出しと同じくほかの文字より大きい
+//   丸の中に「Digest」: 「igest」は紺、「D」は緑(中を▶の形にくりぬき)。Dはほかの文字より大きい。白い丸が「.」の役なので、文字の「.」は置かない(2026-11-08 taku の希望)
 const CIRCLE = { x: 256, y: 256, r: 212 };
 const TEXT_SCALE = 1.2; // 「.Digest」の文字は、下の形(丸の大きさ190のときの形)を丸の中心から1.2倍に広げて使う
 const BALL_OPACITY = 0.09;
@@ -47,8 +47,8 @@ const nearSegment = (x, y, [ax, ay], [bx, by], half) => {
 };
 
 // ---- 「.Digest」の文字(見出しと同じ比率: 「.」とDは120、igestは62の大きさ。丸の真ん中に置く) ----
-const BIG = 120, SMALL = 62, ORIGIN_X = 113.7, BASE = 301;
-const DOT = { x: ORIGIN_X + 0.095 * BIG, y: BASE - 0.095 * BIG, r: 0.095 * BIG };
+// ORIGIN_X は「.」があったときの左端(113.7)から、「.」とすき間の幅の半分だけ左へ寄せて、Digest が丸の真ん中に来るようにした値
+const BIG = 120, SMALL = 62, ORIGIN_X = 113.7 - (0.19 * 120 + 0.07 * 120) / 2, BASE = 301;
 const D_X = ORIGIN_X + 0.19 * BIG + 0.07 * BIG, D_H = 0.88 * BIG, D_SCALE = D_H / 240, D_Y = BASE - D_H;
 // Dの形(240の高さで考えた形を縮める): 縦棒+右が半円、中を▶でくりぬき
 const inD = (x, y) => {
@@ -123,7 +123,6 @@ function colorAt(uu, vv) {
   const x = uu * 512, y = vv * 512;
   if ((x - CIRCLE.x) ** 2 + (y - CIRCLE.y) ** 2 > CIRCLE.r ** 2) return NAVY;
   const tx = CIRCLE.x + (x - CIRCLE.x) / TEXT_SCALE, ty = CIRCLE.y + (y - CIRCLE.y) / TEXT_SCALE;
-  if ((tx - DOT.x) ** 2 + (ty - DOT.y) ** 2 <= DOT.r ** 2) return NAVY;
   if (inD(tx, ty)) return TEAL;
   if (inText(tx, ty)) return NAVY;
   if (onBall(x, y)) return WHITE.map((c, i) => c * (1 - BALL_OPACITY) + TEAL[i] * BALL_OPACITY);
