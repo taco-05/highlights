@@ -420,6 +420,14 @@
     "teams": [
      "hoffenheim"
     ]
+   },
+   {
+    "match": "7Px1ZRsEDxc",
+    "date": "2026-11-08",
+    "teams": [
+     "hoffenheim",
+     "schalke"
+    ]
    }
   ],
   "守田英正": [
@@ -481,6 +489,14 @@
     "match": "6CiQRzajWyQ",
     "date": "2026-10-31",
     "teams": [
+     "schalke"
+    ]
+   },
+   {
+    "match": "7Px1ZRsEDxc",
+    "date": "2026-11-08",
+    "teams": [
+     "hoffenheim",
      "schalke"
     ]
    }
