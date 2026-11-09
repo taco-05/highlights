@@ -134,10 +134,18 @@ function splitTitle(title) {
 const knownNames = new Set(jpCfg.names);
 const stopwords = new Set(jpCfg.stopwords);
 const review = { newNameCandidates: [], unparsed: [] };
+// 姓と名の間に空白が入った登録済みの名前(例:「鈴木 彩艶」)
+const SPACED_NAME_RE = new RegExp(
+  [...knownNames].map((n) => [...n].map((ch) => ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[\\s　]?')).join('|'),
+  'gu',
+);
+// 同じ試合で「鈴木」と「鈴木彩艶」のように片方がもう片方に含まれるときは、長いほうだけ残す
+const dedupeNames = (names) => names.filter((n) => !names.some((o) => o !== n && o.includes(n)));
 
 function findJapanese(rawText, titleForReview) {
   let text = rawText;
   for (const [v, canon] of Object.entries(jpCfg.variants)) text = text.split(v).join(canon);
+  text = text.replace(SPACED_NAME_RE, (s) => s.replace(/[\s　]/g, '')); // 「鈴木 彩艶」→「鈴木彩艶」
   const found = new Set();
   const playedAt = (idx, len) => !NEGATIVE_RE.test(text.slice(idx + len).split(/[｜|、。]/)[0].slice(0, 15));
 
@@ -307,7 +315,7 @@ const list = matches
     publishedAt: new Date(m.v.time).toISOString(),
     home: pub(m.home),
     away: pub(m.away),
-    jp: [...m.jp],
+    jp: dedupeNames([...m.jp]),
     ...(m.v.comments != null && { commentCount: m.v.comments }),
   }))
   .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
