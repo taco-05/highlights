@@ -43,7 +43,7 @@ const COMPS = [
   { re: /オリンピック|五輪/, id: 'olympic', label: 'オリンピック', short: '五輪', national: true },
   { re: /キリンチャレンジカップ/, id: 'kirinchallenge', label: 'キリンチャレンジカップ', short: '親善試合', national: true },
   { re: /キリンカップ/, id: 'kirincup', label: 'キリンカップ', short: 'キリンカップ', national: true },
-  { re: /国際親善試合|国際試合/, id: 'friendly', label: '国際親善試合', short: '親善試合', national: true },
+  { re: /国際親善試合|国際試合|MIZUHO BLUE CHALLENGE/i, id: 'friendly', label: '国際親善試合', short: '親善試合', national: true },
   { re: /プレシーズン|親善|フレンドリー/, skip: true },
   { re: /ブンデスリーガ\s*2部/, skip: true },
   // Jリーグのチームが出る大会(J1のチームの試合だけ)。ACLは「チャンピオンズリーグ」を含むので欧州CLより先に判定する
@@ -78,8 +78,11 @@ const COMPS = [
 for (const c of COMPS) if (c.national) c.group = 'national';
 // J1とJ1チームのカップ戦・ACL、代表戦は日本人選手ばかり(または日本人が出ない)なので、JPNマークは付けない
 const noJpMark = (comp) => comp.id === 'j1' || !!comp.j1Only || !!comp.national;
-// 代表戦は「2026」のような年の表記(クラブの「2026-27」とは違う)。2026年以降の大会だけ
+// 代表戦は「2026」のような年の表記(クラブの「2026-27」とは違う)。2026年以降の大会だけ。
+// 年が書かれていないタイトル(U-NEXTの「国際親善試合」など)は、古い年が書かれていなければ使う
 const NATIONAL_YEAR_RE = /20(2[6-9]|[3-9]\d)/;
+const OLD_YEAR_RE = /(19\d\d|20[01]\d|202[0-5])(?!\d)/;
+const nationalYearOk = (title) => NATIONAL_YEAR_RE.test(title) || !OLD_YEAR_RE.test(title);
 // 世代別の代表(日本だけ対象): U-23・U-20・五輪など
 const YOUTH_RE = /U-?\s?(\d{2})|五輪|オリンピック/;
 const SEASON_RE = /2026[-/]27|26[-/]27/;
@@ -221,7 +224,7 @@ for (const v of videos.values()) {
   const comp = detectCompFromEnd(compText) || detectComp(compText) || detectComp(v.title);
   if (!comp || comp.skip) continue;
   // 「2026-27」などのシーズン表記で古い動画を除く(国内カップ戦は表記が違うことがあるので見ない。代表戦は年の表記)
-  if (comp.national ? !NATIONAL_YEAR_RE.test(v.title) : !comp.j1Only && !SEASON_RE.test(v.title)) continue;
+  if (comp.national ? !nationalYearOk(v.title) : !comp.j1Only && !SEASON_RE.test(v.title)) continue;
   const round = detectRound(compText);
   const isHighlight = /ハイライト/.test(v.title) && !NOT_HIGHLIGHT_RE.test(v.title);
   if (isHighlight && pair && comp.national) {
