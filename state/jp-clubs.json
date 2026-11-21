@@ -21,6 +21,14 @@
     "teams": [
      "frankfurt"
     ]
+   },
+   {
+    "match": "qC5yHGpviyI",
+    "date": "2026-11-21",
+    "teams": [
+     "frankfurt",
+     "hoffenheim"
+    ]
    }
   ],
   "伊藤洋輝": [
@@ -110,6 +118,14 @@
     "teams": [
      "gladbach"
     ]
+   },
+   {
+    "match": "6nzlYFc01V8",
+    "date": "2026-11-21",
+    "teams": [
+     "gladbach",
+     "dortmund"
+    ]
    }
   ],
   "宇野禅斗": [
@@ -125,6 +141,14 @@
     "date": "2026-10-31",
     "teams": [
      "gladbach"
+    ]
+   },
+   {
+    "match": "6nzlYFc01V8",
+    "date": "2026-11-21",
+    "teams": [
+     "gladbach",
+     "dortmund"
     ]
    }
   ],
@@ -261,6 +285,14 @@
     "date": "2026-10-27",
     "teams": [
      "frankfurt"
+    ]
+   },
+   {
+    "match": "qC5yHGpviyI",
+    "date": "2026-11-21",
+    "teams": [
+     "frankfurt",
+     "hoffenheim"
     ]
    }
   ],
@@ -428,6 +460,14 @@
      "hoffenheim",
      "schalke"
     ]
+   },
+   {
+    "match": "qC5yHGpviyI",
+    "date": "2026-11-21",
+    "teams": [
+     "frankfurt",
+     "hoffenheim"
+    ]
    }
   ],
   "守田英正": [
@@ -531,6 +571,13 @@
     "teams": [
      "freiburg"
     ]
+   },
+   {
+    "match": "kgR5fozh9og",
+    "date": "2026-11-21",
+    "teams": [
+     "freiburg"
+    ]
    }
   ],
   "後藤啓介": [
@@ -544,6 +591,13 @@
    {
     "match": "CAngDSOE4QI",
     "date": "2026-11-08",
+    "teams": [
+     "freiburg"
+    ]
+   },
+   {
+    "match": "kgR5fozh9og",
+    "date": "2026-11-21",
     "teams": [
      "freiburg"
     ]
