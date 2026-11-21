@@ -86,6 +86,14 @@
      "coventry",
      "sunderland"
     ]
+   },
+   {
+    "match": "qUf7q31Ei5M",
+    "date": "2026-11-21",
+    "teams": [
+     "coventry",
+     "crystalpalace"
+    ]
    }
   ],
   "板倉滉": [
@@ -228,6 +236,13 @@
     "teams": [
      "psv"
     ]
+   },
+   {
+    "match": "xIyhzWBVPP0",
+    "date": "2026-11-21",
+    "teams": [
+     "psv"
+    ]
    }
   ],
   "鈴木彩艶": [
@@ -252,6 +267,13 @@
     "date": "2026-11-08",
     "teams": [
      "manutd",
+     "astonvilla"
+    ]
+   },
+   {
+    "match": "SUSBMascFKI",
+    "date": "2026-11-21",
+    "teams": [
      "astonvilla"
     ]
    }
@@ -413,6 +435,13 @@
      "unionsg",
      "genk"
     ]
+   },
+   {
+    "match": "fZiSad_rc0I",
+    "date": "2026-11-21",
+    "teams": [
+     "genk"
+    ]
    }
   ],
   "横山歩夢": [
@@ -504,6 +533,14 @@
      "ipswich",
      "bournemouth"
     ]
+   },
+   {
+    "match": "tyJEEPmIxrQ",
+    "date": "2026-11-21",
+    "teams": [
+     "tottenham",
+     "ipswich"
+    ]
    }
   ],
   "田中碧": [
@@ -530,6 +567,14 @@
      "leeds",
      "tottenham"
     ]
+   },
+   {
+    "match": "JQN6BIbuAjU",
+    "date": "2026-11-21",
+    "teams": [
+     "chelsea",
+     "leeds"
+    ]
    }
   ],
   "田中聡": [
@@ -545,6 +590,13 @@
     "date": "2026-11-08",
     "teams": [
      "hoffenheim",
+     "schalke"
+    ]
+   },
+   {
+    "match": "l0-9s2eE3xI",
+    "date": "2026-11-21",
+    "teams": [
      "schalke"
     ]
    }
