@@ -53,7 +53,7 @@ takuの「ネタバレなしで欧州サッカー(+J1)のハイライトを見�
 
 ## 仕組み
 
-`.github/workflows/update.yml` が30分ごと(と push 時)に動く:
+`.github/workflows/update.yml` が30分ごと(毎時7分・37分。と push 時)に動く。2026-11-06ごろから毎時0分・30分の予約が1日3〜4回に間引かれたので時刻をずらした。公開(deploy-pages)は保存直後だとファイルが見えず失敗することがあるので、20秒待ってから公開し、失敗したら1分後に1回だけやり直す:
 動画取得(`fetch-youtube.mjs`)→ 対象試合の選別(`build.mjs` → `site/data.js`)→ コメント取得(`fetch-comments.mjs` → `site/comments/`)→ GitHub Pages に公開 → 通知(`notify.mjs`。7・11・16時を過ぎていて未送信なら)→ 通知の記録 `state/notify.json` をボットがコミット
 
 - GitHub の秘密の保管場所: `YOUTUBE_API_KEY`(takuが発行)、`VAPID_PRIVATE_KEY`(通知の送り主の証明。対の公開鍵は `site/push-config.js`)、`PUSH_SUBSCRIPTION`(iPhoneの通知先。アプリの🔔ベル→「通知をオンにする」→ 登録コードを taku がGitHubに登録)、`PUSH_SUBSCRIPTION_IPAD`(iPadの通知先。iPadではアプリがこの名前を案内する)

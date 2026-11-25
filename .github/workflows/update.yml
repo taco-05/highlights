@@ -1,4 +1,4 @@
-# 30分ごとに YouTube から最新の動画を集め、対象試合を選んでサイトを公開し直す。
+# 30分ごと(毎時7分・37分)に YouTube から最新の動画を集め、対象試合を選んでサイトを公開し直す。
 # 7時・11時・16時(日本時間)を過ぎたら、前回以降の新着をまとめて通知する。
 name: update
 
@@ -6,7 +6,8 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: '*/30 * * * *'
+    # 毎時0分・30分はGitHub全体で混み合い、予約の実行が間引かれやすいので、半端な時刻にずらす
+    - cron: '7,37 * * * *'
   workflow_dispatch:
     inputs:
       test:
@@ -28,7 +29,7 @@ jobs:
     runs-on: ubuntu-24.04
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment-retry.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -58,7 +59,18 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
+      # 保存した直後は公開の手順からファイルが見えないことがある(2026-11: 「No artifacts named github-pages」で
+      # 公開が続けて失敗した)。少し待ってから公開し、失敗したら1分おいてもう一度だけやり直す
+      - name: 保存したファイルが見えるようになるまで少し待つ
+        run: sleep 20
       - id: deployment
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+      - name: 公開に失敗したら1分待つ
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 60
+      - id: deployment-retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v5
       - name: 通知(7時・11時・16時)
         env:
