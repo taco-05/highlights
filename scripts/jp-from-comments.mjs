@@ -54,7 +54,8 @@ const clubs = {};
 for (const n of Object.keys(state.players)) { const c = clubOf(n); if (c) clubs[n] = c; }
 
 // ---- 2. コメントから補う ----
-const keys = [...jpCfg.names.map((n) => [n, n]), ...Object.entries(jpCfg.surnames), ...Object.entries(jpCfg.variants)];
+// フルネーム・名字・表記ゆれに加えて、コメントでよく使われる呼び名(「ザイオン」など)も探す
+const keys = [...jpCfg.names.map((n) => [n, n]), ...Object.entries(jpCfg.surnames), ...Object.entries(jpCfg.variants), ...Object.entries(jpCfg.nicknames || {})];
 const noJp = (m) => m.group === 'j1' || m.group === 'national' || ['ACLE', 'ACL2'].includes(m.compShort);
 const added = [];
 for (const m of data.matches) {
