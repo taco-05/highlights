@@ -439,7 +439,12 @@
   let guardTimer = null;
   let playStarted = false;
   const GUARD_MS = 1500;
-  const noCaptions = (p) => { try { p.unloadModule('captions'); p.unloadModule('cc'); } catch {} };
+  // YouTubeは一度字幕をオンにすると、それを覚えていて次の動画でも自動字幕(日本語・自動生成)を出す。
+  // unloadModule だけではこの記憶が消えないので、字幕の選択を「なし」にする(2026-11: 一部の動画で字幕が出ていた)
+  const noCaptions = (p) => {
+    try { p.setOption('captions', 'track', {}); } catch {}
+    try { p.unloadModule('captions'); p.unloadModule('cc'); } catch {}
+  };
 
   // 再生前・再生後は、プレイヤーを見えなくして自前の再生ボタンを出す(サムネイルやおすすめ動画を見せない)
   function showCover(label) {
@@ -474,7 +479,7 @@
         onStateChange: (e) => {
           const S = YT.PlayerState;
           if (e.data === S.PLAYING || e.data === S.BUFFERING) { clearTimeout(fallbackTimer); playStarted = true; }
-          if (e.data === S.PLAYING) { watched.add(id); saveWatched(); updateWatchBtn(); }
+          if (e.data === S.PLAYING) { noCaptions(e.target); watched.add(id); saveWatched(); updateWatchBtn(); }
           // 終わったらすぐプレイヤーを隠す(おすすめ動画に他の試合の結果が出るのを防ぐ)。
           // 画面は開いたままにして、続けてコメントを読めるようにする
           if (e.data === S.ENDED) showCover('▶ もう一度再生');
@@ -490,7 +495,7 @@
         onApiChange: (e) => noCaptions(e.target),
         onStateChange: (e) => {
           const S = YT.PlayerState;
-          if (e.data === S.PLAYING) { watched.add(id); saveWatched(); updateWatchBtn(); }
+          if (e.data === S.PLAYING) { noCaptions(e.target); watched.add(id); saveWatched(); updateWatchBtn(); }
           // iPad・Macの全画面で最後まで見たら、おすすめ動画が出る前に全画面を抜ける
           if (e.data === S.ENDED && document.fullscreenElement) document.exitFullscreen().catch(() => {});
         },
